@@ -1,0 +1,9 @@
+# Какой срок действия у сертификата на покупки на Kaspi Travel?
+
+- Дата создания: 14.11.2025
+- Дата обновления: 18.11.2025
+- Полезность: 91%
+
+## Ответ
+
+Сертификат на покупки на Kaspi Travel имеет ограниченный срок действия. Дату, до которой его нужно использовать, можно посмотреть в <ссылка: ссылка_приложения/iOS: 'https://appsto.re/kz/zU2ohb.i'; android: 'https://play.google.com/store/apps/details?id=kz.kaspi.mobile'><ссылка: ссылка_приложения/iOS: 'https://appsto.re/kz/zU2ohb.i'; android: 'https://play.google.com/store/apps/details?id=kz.kaspi.mobile'>: Сервисы → Сертификаты. Также за 3 дня до нее вам придет сообщение в приложении Kaspi.kz.

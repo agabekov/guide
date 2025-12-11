@@ -1,0 +1,20 @@
+# macOS
+.DS_Store
+
+# Node / tooling (if added later)
+node_modules/
+dist/
+build/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Office / temporary files
+~$*
+*.tmp
+
+# Editor settings
+.vscode/
+.idea/
+
