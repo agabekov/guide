@@ -324,21 +324,19 @@ const HomePage: React.FC = () => {
       <section className="relative overflow-hidden bg-aurora">
         <div className="absolute inset-0 opacity-70 gradient-mesh" />
         <div className="section-container relative pt-16 pb-12 md:pb-16">
-          <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="space-y-6"
+              className="space-y-8"
             >
-              <div className="pill bg-white/90 shadow-sm">
+              <div className="pill bg-white/95 shadow-sm">
                 <Sparkles className="w-4 h-4 text-kaspi-red" />
-                <span className="text-sm font-semibold text-kaspi-dark">
-                  Kaspi Guide · AI
-                </span>
+                <span className="text-sm font-semibold text-kaspi-dark">Kaspi Guide · AI</span>
               </div>
 
               <div className="space-y-3">
-                <h1 className="text-4xl sm:text-5xl font-display font-bold leading-tight text-kaspi-dark">
+                <h1 className="text-4xl sm:text-5xl font-display font-bold leading-tight text-kaspi-dark text-balance">
                   Сервис для быстрого создания FAQ в стиле Kaspi.kz
                 </h1>
                 <p className="text-lg text-kaspi-gray max-w-3xl">
@@ -346,28 +344,14 @@ const HomePage: React.FC = () => {
                 </p>
               </div>
 
-              <div className="grid sm:grid-cols-2 gap-3">
-                <div className="flex items-center gap-3 rounded-xl border border-white/70 bg-white/80 px-4 py-3 shadow-sm">
-                  <FileText className="w-5 h-5 text-kaspi-red" />
-                  <div>
-                    <p className="font-semibold text-kaspi-dark">Понимает длинные тексты</p>
-                    <p className="text-sm text-kaspi-gray">Можно вставить инструкцию целиком</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 rounded-xl border border-white/70 bg-white/80 px-4 py-3 shadow-sm">
-                  <CheckSquare className="w-5 h-5 text-kaspi-red" />
-                  <div>
-                    <p className="font-semibold text-kaspi-dark">Чистый тон Kaspi</p>
-                    <p className="text-sm text-kaspi-gray">Без лишней воды и повтора</p>
-                  </div>
-                </div>
+              <div className="grid sm:grid-cols-3 gap-3">
+                <HighlightCard icon={<FileText className="w-5 h-5" />} title="Понимает длинные тексты" subtitle="Вставьте инструкцию целиком" />
+                <HighlightCard icon={<CheckSquare className="w-5 h-5" />} title="Чистый тон Kaspi" subtitle="Без воды и повтора" />
+                <HighlightCard icon={<Sparkles className="w-5 h-5" />} title="Готово за минуты" subtitle="До 20 вопросов сразу" />
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
-                <button
-                  onClick={scrollToInput}
-                  className="btn-primary shine flex items-center gap-2"
-                >
+                <button onClick={scrollToInput} className="btn-primary shine flex items-center gap-2">
                   <Sparkles className="w-5 h-5" />
                   <span>Начать с текста</span>
                 </button>
@@ -375,9 +359,7 @@ const HomePage: React.FC = () => {
                   <ArrowRight className="w-5 h-5" />
                   <span>Смотреть примеры FAQ</span>
                 </Link>
-                <span className="text-sm text-kaspi-gray">
-                  Без регистрации и лишних экранов
-                </span>
+                <span className="text-sm text-kaspi-gray">Без регистрации и лишних экранов</span>
               </div>
             </motion.div>
 
@@ -392,22 +374,16 @@ const HomePage: React.FC = () => {
               <div className="relative space-y-5">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-kaspi-gray">
-                      Процесс
-                    </p>
-                    <p className="text-2xl font-display font-bold text-kaspi-dark">
-                      Шаг {currentStepIndex + 1} из 4
-                    </p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-kaspi-gray">Процесс</p>
+                    <p className="text-2xl font-display font-bold text-kaspi-dark">Шаг {currentStepIndex + 1} из 4</p>
                   </div>
                   <div className="pill bg-white/90">
                     <Check className="w-4 h-4 text-kaspi-red" />
-                    <span className="text-sm text-kaspi-dark">
-                      {selectedCount} выбрано
-                    </span>
+                    <span className="text-sm text-kaspi-dark">{selectedCount} выбрано</span>
                   </div>
                 </div>
 
-                <div className="space-y-3">
+                <div className="grid gap-3">
                   {stepsFlow.map((item) => {
                     const index = stepsFlow.findIndex((flow) => flow.key === item.key);
                     const isActive = currentStepIndex === index;
@@ -416,11 +392,11 @@ const HomePage: React.FC = () => {
                     return (
                       <div
                         key={item.key}
-                        className={`flex items-start gap-3 rounded-xl border px-4 py-3 transition-all ${
+                        className={`flex items-start gap-3 rounded-2xl px-4 py-3 transition-all border ${
                           isActive
-                            ? 'border-kaspi-red/35 bg-white shadow-md shadow-[0_12px_30px_-18px_rgba(226,59,59,0.35)]'
+                            ? 'border-kaspi-red/40 bg-white shadow-md shadow-[0_12px_30px_-18px_rgba(226,59,59,0.35)]'
                             : isCompleted
-                            ? 'border-green-200/80 bg-green-50/80'
+                            ? 'border-green-200/70 bg-green-50/70'
                             : 'border-white/70 bg-white/80'
                         }`}
                       >
@@ -436,12 +412,8 @@ const HomePage: React.FC = () => {
                           {isCompleted ? <Check className="w-5 h-5" /> : item.number}
                         </div>
                         <div className="flex-1">
-                          <p className={`text-sm font-semibold ${isActive ? 'text-kaspi-red' : 'text-kaspi-dark'}`}>
-                            {item.title}
-                          </p>
-                          <p className="text-xs text-kaspi-gray">
-                            {item.description}
-                          </p>
+                          <p className={`text-sm font-semibold ${isActive ? 'text-kaspi-red' : 'text-kaspi-dark'}`}>{item.title}</p>
+                          <p className="text-xs text-kaspi-gray">{item.description}</p>
                         </div>
                       </div>
                     );
@@ -449,18 +421,8 @@ const HomePage: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 pt-2">
-                  <div className="rounded-xl bg-white/80 border border-white/70 p-4 shadow-sm">
-                    <p className="text-xs text-kaspi-gray">Вопросов</p>
-                    <p className="text-xl font-display font-bold text-kaspi-dark">
-                      {questions.length || '—'}
-                    </p>
-                  </div>
-                  <div className="rounded-xl bg-white/80 border border-white/70 p-4 shadow-sm">
-                    <p className="text-xs text-kaspi-gray">Готовых ответов</p>
-                    <p className="text-xl font-display font-bold text-kaspi-dark">
-                      {generatedFAQs.length || '—'}
-                    </p>
-                  </div>
+                  <StatTile label="Вопросов" value={questions.length ? questions.length.toString() : '—'} />
+                  <StatTile label="Готовых ответов" value={generatedFAQs.length ? generatedFAQs.length.toString() : '—'} />
                 </div>
               </div>
             </motion.div>
@@ -473,24 +435,11 @@ const HomePage: React.FC = () => {
         <div className="max-w-5xl mx-auto">
           {/* Step Indicator */}
           <div className="mb-8">
-            <div className="card p-5 sm:p-6">
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-3">
-                {stepsFlow.map((item, index) => (
-                  <React.Fragment key={item.key}>
-                    <StepIndicator
-                      number={item.number}
-                      title={item.title}
-                      description={item.description}
-                      isActive={step === item.key}
-                      isCompleted={currentStepIndex > index}
-                    />
-                    {index < stepsFlow.length - 1 && (
-                      <div className="hidden md:block flex-1 h-px bg-gradient-to-r from-transparent via-kaspi-red/30 to-transparent" />
-                    )}
-                  </React.Fragment>
-                ))}
-              </div>
-            </div>
+            <StepRail
+              steps={stepsFlow}
+              currentStepIndex={currentStepIndex}
+              activeStep={step}
+            />
           </div>
 
           {/* Error Message */}
@@ -986,44 +935,49 @@ interface StepIndicatorProps {
   isCompleted: boolean;
 }
 
-const StepIndicator: React.FC<StepIndicatorProps> = ({ number, title, description, isActive, isCompleted }) => {
-  return (
+const StepIndicator: React.FC<StepIndicatorProps> = ({ number, title, description, isActive, isCompleted }) => (
+  <div className="flex flex-col items-center text-center px-3">
     <div
-      className={`flex-1 min-w-[180px] rounded-xl border px-4 py-3 transition-all ${
-        isActive
-          ? 'border-kaspi-red/40 bg-white shadow-sm shadow-[0_10px_24px_-18px_rgba(226,59,59,0.3)]'
-          : isCompleted
-          ? 'border-green-200/70 bg-green-50/80'
-          : 'border-white/70 bg-white/80'
+      className={`w-10 h-10 rounded-full flex items-center justify-center font-bold border-2 transition-all ${
+        isCompleted
+          ? 'bg-kaspi-success text-white border-kaspi-success'
+          : isActive
+          ? 'bg-kaspi-red text-white border-kaspi-red'
+          : 'bg-white text-kaspi-gray border-white'
       }`}
     >
-      <div className="flex items-center gap-3">
-        <div
-          className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold ${
-            isCompleted
-              ? 'bg-kaspi-success text-white'
-              : isActive
-              ? 'bg-kaspi-red text-white'
-              : 'bg-gray-100 text-kaspi-gray'
-          }`}
-        >
-          {isCompleted ? <Check className="w-5 h-5" /> : number}
-        </div>
-        <div className="flex-1">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-kaspi-gray">Шаг {number}</p>
-          <p className={`text-sm font-semibold ${isActive ? 'text-kaspi-red' : 'text-kaspi-dark'}`}>
-            {title}
-          </p>
-        </div>
-      </div>
-      {description && (
-        <p className="text-xs text-kaspi-gray mt-2">
-          {description}
-        </p>
-      )}
+      {isCompleted ? <Check className="w-5 h-5" /> : number}
     </div>
-  );
-};
+    <p className={`mt-2 text-sm font-semibold ${isActive ? 'text-kaspi-red' : 'text-kaspi-dark'}`}>{title}</p>
+    {description && <p className="text-xs text-kaspi-gray mt-1 max-w-[140px]">{description}</p>}
+  </div>
+);
+
+interface StepRailProps {
+  steps: typeof stepsFlow;
+  currentStepIndex: number;
+  activeStep: StepKey;
+}
+
+const StepRail: React.FC<StepRailProps> = ({ steps, currentStepIndex, activeStep }) => (
+  <div className="card p-6">
+    <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+      <div className="absolute hidden md:block left-10 right-10 top-[28px] h-px bg-gradient-to-r from-transparent via-kaspi-red/30 to-transparent" />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 md:gap-3 w-full">
+        {steps.map((step, index) => (
+          <StepIndicator
+            key={step.key}
+            number={step.number}
+            title={step.title}
+            description={step.description}
+            isActive={activeStep === step.key}
+            isCompleted={currentStepIndex > index}
+          />
+        ))}
+      </div>
+    </div>
+  </div>
+);
 
 interface FeatureCardProps {
   icon: React.ElementType;
@@ -1049,3 +1003,23 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ icon: Icon, title, descriptio
 };
 
 export default HomePage;
+
+// Small helper cards
+const HighlightCard = ({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle: string }) => (
+  <div className="flex items-start gap-3 rounded-2xl bg-white/90 border border-white/70 px-4 py-3 shadow-sm">
+    <div className="w-10 h-10 rounded-xl bg-kaspi-red/10 flex items-center justify-center text-kaspi-red">
+      {icon}
+    </div>
+    <div>
+      <p className="font-semibold text-kaspi-dark">{title}</p>
+      <p className="text-sm text-kaspi-gray">{subtitle}</p>
+    </div>
+  </div>
+);
+
+const StatTile = ({ label, value }: { label: string; value: string }) => (
+  <div className="rounded-xl bg-white/80 border border-white/70 p-4 shadow-sm">
+    <p className="text-xs text-kaspi-gray">{label}</p>
+    <p className="text-xl font-display font-bold text-kaspi-dark">{value}</p>
+  </div>
+);
