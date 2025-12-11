@@ -433,15 +433,6 @@ const HomePage: React.FC = () => {
       {/* Main Content */}
       <section className="section-container relative z-10 -mt-10">
         <div className="max-w-5xl mx-auto">
-          {/* Step Indicator */}
-          <div className="mb-8">
-            <StepRail
-              steps={stepsFlow}
-              currentStepIndex={currentStepIndex}
-              activeStep={step}
-            />
-          </div>
-
           {/* Error Message */}
           <AnimatePresence>
             {error && (
@@ -883,121 +874,6 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* Info Section */}
-      {step === 'input' && (
-        <section className="section-container pt-0">
-          <div className="max-w-5xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="card p-8 gradient-mesh"
-            >
-              <h2 className="text-3xl font-display font-bold text-kaspi-dark text-center mb-10">
-                Как это работает?
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-                <FeatureCard
-                  icon={FileText}
-                  title="1. Вставьте текст"
-                  description="Добавьте исходный текст из документации Kaspi"
-                />
-                <FeatureCard
-                  icon={Sparkles}
-                  title="2. Генерация вопросов"
-                  description="AI анализирует текст и создает релевантные вопросы"
-                />
-                <FeatureCard
-                  icon={CheckSquare}
-                  title="3. Выберите вопросы"
-                  description="Отметьте нужные вопросы для генерации ответов"
-                />
-                <FeatureCard
-                  icon={Download}
-                  title="4. Получите FAQ"
-                  description="Экспортируйте готовые вопросы и ответы"
-                />
-              </div>
-            </motion.div>
-          </div>
-        </section>
-      )}
-    </div>
-  );
-};
-
-// Helper Components
-interface StepIndicatorProps {
-  number: number;
-  title: string;
-  description?: string;
-  isActive: boolean;
-  isCompleted: boolean;
-}
-
-const StepIndicator: React.FC<StepIndicatorProps> = ({ number, title, description, isActive, isCompleted }) => (
-  <div className="flex flex-col items-center text-center px-3">
-    <div
-      className={`w-10 h-10 rounded-full flex items-center justify-center font-bold border-2 transition-all ${
-        isCompleted
-          ? 'bg-kaspi-success text-white border-kaspi-success'
-          : isActive
-          ? 'bg-kaspi-red text-white border-kaspi-red'
-          : 'bg-white text-kaspi-gray border-white'
-      }`}
-    >
-      {isCompleted ? <Check className="w-5 h-5" /> : number}
-    </div>
-    <p className={`mt-2 text-sm font-semibold ${isActive ? 'text-kaspi-red' : 'text-kaspi-dark'}`}>{title}</p>
-    {description && <p className="text-xs text-kaspi-gray mt-1 max-w-[140px]">{description}</p>}
-  </div>
-);
-
-interface StepRailProps {
-  steps: typeof stepsFlow;
-  currentStepIndex: number;
-  activeStep: StepKey;
-}
-
-const StepRail: React.FC<StepRailProps> = ({ steps, currentStepIndex, activeStep }) => (
-  <div className="card p-6">
-    <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-      <div className="absolute hidden md:block left-10 right-10 top-[28px] h-px bg-gradient-to-r from-transparent via-kaspi-red/30 to-transparent" />
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 md:gap-3 w-full">
-        {steps.map((step, index) => (
-          <StepIndicator
-            key={step.key}
-            number={step.number}
-            title={step.title}
-            description={step.description}
-            isActive={activeStep === step.key}
-            isCompleted={currentStepIndex > index}
-          />
-        ))}
-      </div>
-    </div>
-  </div>
-);
-
-interface FeatureCardProps {
-  icon: React.ElementType;
-  title: string;
-  description: string;
-}
-
-const FeatureCard: React.FC<FeatureCardProps> = ({ icon: Icon, title, description }) => {
-  return (
-    <div className="relative rounded-2xl border border-white/60 bg-white/80 p-6 shadow-sm overflow-hidden">
-      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-kaspi" />
-      <div className="w-12 h-12 rounded-xl bg-kaspi-red/10 flex items-center justify-center mb-4">
-        <Icon className="w-6 h-6 text-kaspi-red" />
-      </div>
-      <h3 className="font-display font-bold text-kaspi-dark mb-2">
-        {title}
-      </h3>
-      <p className="text-sm text-kaspi-gray leading-relaxed">
-        {description}
-      </p>
     </div>
   );
 };
