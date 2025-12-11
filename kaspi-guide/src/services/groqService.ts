@@ -1,12 +1,14 @@
 const apiKey = import.meta.env.VITE_GROQ_API_KEY;
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
-// Доступные модели Groq
+// Доступные модели Groq (в порядке приоритета)
+// Модели выбраны для лучшей поддержки русского языка и качества генерации
 const MODEL_NAMES = [
-  'llama-3.3-70b-versatile',
-  'llama-3.1-70b-versatile',
-  'mixtral-8x7b-32768',
-  'gemma2-9b-it',
+  'llama-3.3-70b-versatile',           // Лучшая модель, 128K context
+  'meta-llama/llama-4-scout-17b-16e-instruct',  // Новая LLaMA 4 Scout
+  'meta-llama/llama-4-maverick-17b-128e-instruct', // LLaMA 4 Maverick
+  'llama-3.1-8b-instant',              // Быстрая, хороша для русского
+  'moonshotai/kimi-k2-instruct',       // Kimi - отличная для многоязычности
 ];
 
 export interface GeneratedQuestion {
