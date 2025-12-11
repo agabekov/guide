@@ -52,6 +52,17 @@ const callGroqAPI = async (
     throw new Error('Не настроен ключ Groq. Добавьте VITE_GROQ_API_KEY в .env файл.');
   }
 
+  // Validate API key format
+  if (typeof apiKey !== 'string' || apiKey.trim() === '') {
+    throw new Error('API ключ не настроен правильно. Проверьте переменную окружения VITE_GROQ_API_KEY.');
+  }
+
+  // Check for non-ASCII characters in API key
+  const hasNonAscii = /[^\x00-\x7F]/.test(apiKey);
+  if (hasNonAscii) {
+    throw new Error('API ключ содержит недопустимые символы. Используйте только ASCII символы.');
+  }
+
   const response = await fetch(GROQ_API_URL, {
     method: 'POST',
     headers: {
