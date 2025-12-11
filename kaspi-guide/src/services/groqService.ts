@@ -1,5 +1,9 @@
 import editorChecklistRaw from '../data/editor-checklist.txt?raw';
 import type { FAQItem } from '../types';
+import { findSimilarFAQs } from './ragService';
+import { compressChecklist } from './checklistCompressor';
+import { getCacheKey, getCachedAnswers, setCachedAnswers } from './cacheService';
+import { estimateTokens, createDetailedTokenStats, logDetailedTokenStats } from '../utils/tokenCounter';
 
 const apiKey = import.meta.env.VITE_GROQ_API_KEY;
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
@@ -132,7 +136,7 @@ const callGroqAPI = async (
   return data.choices[0]?.message?.content || '';
 };
 
-// Генерация вопросов с автоматическим выбором модели
+// Генерация вопросов с автоматическим выбором модели + RAG оптимизация
 export const generateQuestions = async (
   sourceText: string,
   faqData: any[]
@@ -142,15 +146,26 @@ export const generateQuestions = async (
   // Пробуем разные модели
   for (const modelName of MODEL_NAMES) {
     try {
-      console.log(`Trying Groq model: ${modelName}`);
+      console.log(`\n🤖 Trying Groq model: ${modelName}`);
 
-      const styleAnalysis = analyzeFAQStyle(faqData);
+      // ✨ ОПТИМИЗАЦИЯ 1: RAG - используем семантический поиск вместо случайной выборки
+      console.log('🔍 Finding similar FAQs using RAG...');
+      const relevantFAQs = await findSimilarFAQs(sourceText, 5); // Топ-5 вместо 12 случайных
+      const styleAnalysis = analyzeFAQStyle(relevantFAQs);
+
+      // ✨ ОПТИМИЗАЦИЯ 2: Сжимаем чеклист
+      console.log('🗜️  Compressing checklist...');
+      const compressedChecklist = compressChecklist(sourceText, editorGuidelines);
+      const compressedChecklistPrompt = `
+Редакторский чек-лист (релевантные секции):
+${compressedChecklist}
+`;
 
       const prompt = `
 Ты - эксперт по созданию FAQ для финансового сервиса Kaspi.kz.
 
 ${styleAnalysis}
-${editorGuidelinesPrompt}
+${compressedChecklistPrompt}
 
 На основе анализа стиля существующих FAQ и редакторского чек-листа, сгенерируй список из 10-15 вопросов, которые пользователи могут задать по следующему тексту:
 
@@ -169,6 +184,10 @@ ${sourceText}
 Верни только список вопросов, каждый вопрос на новой строке, без нумерации.
 `;
 
+      // 📊 Подсчет токенов
+      const promptTokens = estimateTokens(prompt);
+      console.log(`📊 Prompt size: ${promptTokens} tokens (~${(prompt.length / 1024).toFixed(1)}KB)`);
+
       console.log('Generating questions with Groq...');
       const text = await callGroqAPI([
         {
@@ -177,7 +196,7 @@ ${sourceText}
         },
       ], modelName);
 
-      console.log('Groq response:', text);
+      console.log('Groq response received');
 
       // Парсим вопросы
       const questions = text
@@ -211,27 +230,70 @@ ${sourceText}
   );
 };
 
-// Генерация ответов с автоматическим выбором модели
+// Генерация ответов с автоматическим выбором модели + ПОЛНАЯ ОПТИМИЗАЦИЯ
 export const generateAnswers = async (
   questions: string[],
   sourceText: string,
   faqData: any[]
 ): Promise<GeneratedFAQ[]> => {
+  console.log(`\n🚀 Starting answer generation for ${questions.length} questions...`);
+
+  // ✨ ОПТИМИЗАЦИЯ 1: Проверяем кэш ПЕРЕД любой обработкой
+  const cacheKey = getCacheKey(sourceText, questions);
+  const cached = getCachedAnswers(cacheKey);
+
+  if (cached) {
+    console.log('✅ Using cached answers - 100% token savings!');
+    return cached;
+  }
+
+  console.log('💾 Cache miss - generating new answers...');
+
   let lastSuccessfulModel: string | null = null;
   const rateLimitedModels = new Set<string>();
 
   try {
-    const styleAnalysis = analyzeFAQStyle(faqData);
+    // ✨ ОПТИМИЗАЦИЯ 2: RAG - выполняем поиск ОДИН РАЗ для всех вопросов
+    console.log('🔍 Finding similar FAQs using RAG (once for all questions)...');
+    const relevantFAQs = await findSimilarFAQs(sourceText, 5);
+    const styleAnalysis = analyzeFAQStyle(relevantFAQs);
+
+    // ✨ ОПТИМИЗАЦИЯ 3: Сжимаем чеклист ОДИН РАЗ
+    console.log('🗜️  Compressing checklist (once for all questions)...');
+    const compressedChecklist = compressChecklist(sourceText, editorGuidelines);
+    const compressedChecklistPrompt = `
+Редакторский чек-лист (релевантные секции):
+${compressedChecklist}
+`;
+
+    // Подсчет токенов ДО оптимизации (если бы использовали старый метод)
+    const oldStyleAnalysis = analyzeFAQStyle(faqData); // 12 случайных FAQ
+    const oldPromptExample = `${oldStyleAnalysis}\n${editorGuidelinesPrompt}\n${sourceText}`;
+    const tokensBeforePerQuestion = estimateTokens(oldPromptExample);
+
+    // Подсчет токенов ПОСЛЕ оптимизации
+    const newPromptBase = `${styleAnalysis}\n${compressedChecklistPrompt}\n${sourceText}`;
+    const tokensAfterPerQuestion = estimateTokens(newPromptBase);
+
+    // Логируем статистику
+    const totalBefore = tokensBeforePerQuestion * questions.length;
+    const totalAfter = tokensAfterPerQuestion * questions.length;
+    const stats = createDetailedTokenStats(totalBefore, totalAfter);
+    logDetailedTokenStats('Answer Generation', stats);
+
     const results: GeneratedFAQ[] = [];
 
     // Генерируем ответы для каждого вопроса
-    console.log(`Generating answers for ${questions.length} questions...`);
-    for (const question of questions) {
+    console.log(`\n📝 Generating answers for ${questions.length} questions...`);
+    for (let i = 0; i < questions.length; i++) {
+      const question = questions[i];
+      console.log(`\n   Question ${i + 1}/${questions.length}: ${question.slice(0, 60)}...`);
+
       const prompt = `
 Ты - эксперт по созданию FAQ для финансового сервиса Kaspi.kz.
 
 ${styleAnalysis}
-${editorGuidelinesPrompt}
+${compressedChecklistPrompt}
 
 На основе анализа стиля существующих FAQ и требований чек-листа, создай краткий и понятный ответ на вопрос.
 
@@ -306,9 +368,16 @@ ${question}
         question,
         answer: answerText,
       });
+
+      console.log(`   ✅ Answer ${i + 1}/${questions.length} generated successfully`);
     }
 
-    console.log('All answers generated successfully');
+    console.log('\n✅ All answers generated successfully');
+
+    // ✨ ОПТИМИЗАЦИЯ 4: Сохраняем результаты в кэш
+    console.log('💾 Caching results for future use...');
+    setCachedAnswers(cacheKey, results);
+
     return results;
   } catch (error: any) {
     console.error('Error generating answers:', error);
