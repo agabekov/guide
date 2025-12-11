@@ -1,12 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-
-if (!apiKey) {
-  throw new Error('Missing Gemini API key. Set VITE_GEMINI_API_KEY in your environment.');
-}
-
-const genAI = new GoogleGenerativeAI(apiKey);
+const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
 
 // Пробуем v1 и v1beta (хотя для ключа сейчас работают v1 модели 2.x)
 const API_VERSIONS = ['v1', 'v1beta'];
@@ -68,6 +63,10 @@ export const generateQuestions = async (
   sourceText: string,
   faqData: any[]
 ): Promise<GeneratedQuestion[]> => {
+  if (!genAI || !apiKey) {
+    throw new Error('Не настроен ключ Gemini. Добавьте VITE_GEMINI_API_KEY, чтобы генерировать вопросы.');
+  }
+
   let lastError: any = null;
 
   // Пробуем разные модели и версии API
@@ -143,6 +142,10 @@ export const generateAnswers = async (
   sourceText: string,
   faqData: any[]
 ): Promise<GeneratedFAQ[]> => {
+  if (!genAI || !apiKey) {
+    throw new Error('Не настроен ключ Gemini. Добавьте VITE_GEMINI_API_KEY, чтобы генерировать ответы.');
+  }
+
   let workingModel: any = null;
 
   // Находим рабочую связку модель + версия API
