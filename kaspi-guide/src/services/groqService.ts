@@ -217,25 +217,8 @@ export const generateAnswers = async (
   sourceText: string,
   faqData: any[]
 ): Promise<GeneratedFAQ[]> => {
-  let workingModel: string | null = null;
-
-  // Находим рабочую модель
-  for (const modelName of MODEL_NAMES) {
-    try {
-      console.log(`Testing Groq model: ${modelName}`);
-      // Простой тест
-      await callGroqAPI([{ role: 'user', content: 'test' }], modelName);
-      workingModel = modelName;
-      console.log(`Using Groq model: ${modelName} for answers`);
-      break;
-    } catch (error) {
-      continue;
-    }
-  }
-
-  if (!workingModel) {
-    throw new Error('Не удалось найти рабочую модель Groq API');
-  }
+  let lastSuccessfulModel: string | null = null;
+  const rateLimitedModels = new Set<string>();
 
   try {
     const styleAnalysis = analyzeFAQStyle(faqData);
@@ -276,16 +259,52 @@ ${question}
 `;
 
       console.log(`Generating answer for: ${question}`);
-      const answer = await callGroqAPI([
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ], workingModel);
+      let answerText: string | null = null;
+      let lastError: any = null;
+
+      const modelPriority = lastSuccessfulModel
+        ? [lastSuccessfulModel, ...MODEL_NAMES.filter((model) => model !== lastSuccessfulModel)]
+        : [...MODEL_NAMES];
+
+      for (const modelName of modelPriority) {
+        if (rateLimitedModels.has(modelName)) {
+          continue;
+        }
+
+        try {
+          console.log(`Trying Groq model for answer: ${modelName}`);
+          const answer = await callGroqAPI([
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ], modelName);
+
+          answerText = answer.trim();
+          lastSuccessfulModel = modelName;
+          console.log(`Answer generated with Groq model: ${modelName}`);
+          break;
+        } catch (error: any) {
+          lastError = error;
+          const errorMessage = error?.message || '';
+          console.error(`Groq model ${modelName} failed for answer:`, errorMessage);
+
+          // Если модель уперлась в rate limit, пробуем следующие
+          if (errorMessage.includes('429') || errorMessage.toLowerCase().includes('rate limit')) {
+            rateLimitedModels.add(modelName);
+          }
+        }
+      }
+
+      if (!answerText) {
+        throw new Error(
+          `Не удалось сгенерировать ответ: ${lastError?.message || 'Попробуйте еще раз'}`
+        );
+      }
 
       results.push({
         question,
-        answer: answer.trim(),
+        answer: answerText,
       });
     }
 
