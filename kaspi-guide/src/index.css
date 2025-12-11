@@ -6,25 +6,22 @@
 
 @layer base {
   :root {
-    --kaspi-red: #E23B3B;
-    --kaspi-dark: #0F172A;
-    --kaspi-light: #F8F1EC;
+    --kaspi-red: #7C7BFF;
+    --kaspi-dark: #111827;
+    --kaspi-light: #F3F4FD;
     --kaspi-gray: #5B6475;
     --kaspi-accent: #0EA5E9;
     --kaspi-success: #22C55E;
-    --kaspi-sand: #FBE9E0;
-    --kaspi-amber: #FECF67;
+    --kaspi-sand: #E5E7F5;
+    --kaspi-amber: #F6C35C;
   }
 
   body {
     margin: 0;
     padding: 0;
     min-height: 100vh;
-    background-color: var(--kaspi-light);
-    background-image:
-      radial-gradient(circle at 12% 18%, rgba(226, 59, 59, 0.08), transparent 26%),
-      radial-gradient(circle at 88% 12%, rgba(14, 165, 233, 0.08), transparent 22%),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(248, 241, 236, 0.92));
+    background-color: #6F7AF5;
+    background-image: linear-gradient(135deg, #6F7AF5 0%, #9F6FE8 100%);
     color: var(--kaspi-dark);
     font-family: 'Manrope', sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -59,23 +56,23 @@
 @layer components {
   /* Button styles */
   .btn-primary {
-    background: linear-gradient(135deg, #E23B3B 0%, #F46A3D 100%);
+    background: linear-gradient(120deg, #8A80FF 0%, #C084FF 100%);
     color: white;
     padding: 0.85rem 1.6rem;
     border-radius: 9999px;
     font-weight: 600;
-    border: 1px solid rgba(226, 59, 59, 0.2);
+    border: 1px solid rgba(138, 128, 255, 0.2);
     box-shadow:
-      0 12px 35px -12px rgba(226, 59, 59, 0.55),
-      0 2px 10px -6px rgba(226, 59, 59, 0.45);
+      0 14px 38px -18px rgba(74, 58, 255, 0.55),
+      0 2px 10px -8px rgba(74, 58, 255, 0.35);
     transition: all 0.2s;
   }
 
   .btn-primary:hover {
     transform: translateY(-2px);
     box-shadow:
-      0 18px 40px -10px rgba(226, 59, 59, 0.6),
-      0 2px 10px -6px rgba(226, 59, 59, 0.35);
+      0 18px 44px -12px rgba(74, 58, 255, 0.6),
+      0 2px 10px -6px rgba(74, 58, 255, 0.3);
   }
 
   .btn-primary:active {
@@ -83,18 +80,19 @@
   }
 
   .btn-secondary {
-    background-color: rgba(255, 255, 255, 0.9);
-    color: var(--kaspi-red);
-    border: 1px solid rgba(226, 59, 59, 0.25);
-    padding: 0.85rem 1.4rem;
+    background-color: #F6F7FB;
+    color: #373C5B;
+    border: 1px solid #E6E8F0;
+    padding: 0.78rem 1.35rem;
     border-radius: 9999px;
     font-weight: 600;
     transition: all 0.2s;
-    box-shadow: 0 10px 30px -18px rgba(15, 23, 42, 0.2);
+    box-shadow: 0 10px 30px -18px rgba(15, 23, 42, 0.15);
   }
 
   .btn-secondary:hover {
-    background-color: rgba(226, 59, 59, 0.08);
+    background-color: #EEF1FF;
+    border-color: #D6DAF4;
   }
 
   .btn-secondary:active {
@@ -108,31 +106,34 @@
     font-weight: 600;
     transition: all 0.2s;
     background-color: transparent;
+    border: 1px solid transparent;
   }
 
   .btn-ghost:hover {
-    background-color: rgba(226, 59, 59, 0.08);
-    color: var(--kaspi-red);
+    background-color: #EEF1FF;
+    color: #4A53A2;
+    border-color: #E6E8F0;
   }
 
   /* Card styles */
   .card {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 245, 240, 0.92));
-    border-radius: 1.25rem;
-    border: 1px solid rgba(248, 224, 213, 0.9);
+    background: #FFFFFF;
+    border-radius: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.7);
     box-shadow:
-      0 18px 45px -24px rgba(15, 23, 42, 0.45),
-      0 1px 0px rgba(255, 255, 255, 0.8) inset;
-    transition: all 0.3s;
+      0 24px 48px -26px rgba(17, 24, 39, 0.4),
+      0 10px 30px -24px rgba(17, 24, 39, 0.25);
+    transition: box-shadow 0.25s ease, transform 0.25s ease;
     overflow: hidden;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
   }
 
   .card:hover {
     box-shadow:
-      0 25px 55px -24px rgba(15, 23, 42, 0.55),
-      0 1px 0px rgba(255, 255, 255, 0.9) inset;
+      0 30px 60px -24px rgba(17, 24, 39, 0.45),
+      0 12px 30px -22px rgba(17, 24, 39, 0.25);
+    transform: translateY(-2px);
   }
 
   .card-hover:hover {
@@ -145,35 +146,30 @@
     width: 100%;
     padding: 0.75rem 1rem;
     border-radius: 0.5rem;
-    border: 1.5px solid #e8e0d8;
+    border: 1.5px solid #E2E8F0;
     outline: none;
     transition: all 0.2s;
-    background: rgba(255, 255, 255, 0.85);
+    background: #FFFFFF;
   }
 
   .input:focus {
-    border-color: var(--kaspi-red);
-    box-shadow: 0 8px 25px -20px rgba(226, 59, 59, 0.6);
+    border-color: #B6A5FF;
+    box-shadow: 0 8px 22px -18px rgba(118, 92, 255, 0.4);
   }
 
   /* Gradient backgrounds */
   .gradient-kaspi {
-    background: linear-gradient(135deg, #E23B3B 0%, #F46A3D 100%);
+    background: linear-gradient(135deg, #8A80FF 0%, #C084FF 100%);
   }
 
   .gradient-mesh {
-    background:
-      radial-gradient(60% 70% at 12% 20%, rgba(226, 59, 59, 0.16), transparent 50%),
-      radial-gradient(50% 65% at 85% 18%, rgba(14, 165, 233, 0.14), transparent 45%),
-      radial-gradient(80% 80% at 80% 75%, rgba(254, 207, 103, 0.18), transparent 50%),
-      radial-gradient(70% 70% at 15% 75%, rgba(226, 59, 59, 0.09), transparent 55%);
+    background: radial-gradient(120% 80% at 10% 10%, rgba(255, 255, 255, 0.18), transparent 40%),
+      radial-gradient(90% 70% at 80% 15%, rgba(255, 255, 255, 0.12), transparent 45%),
+      radial-gradient(80% 80% at 60% 70%, rgba(255, 255, 255, 0.14), transparent 40%);
   }
 
   .bg-aurora {
-    background:
-      radial-gradient(120% 70% at 10% 20%, rgba(226, 59, 59, 0.16), transparent 45%),
-      radial-gradient(90% 60% at 70% 10%, rgba(14, 165, 233, 0.12), transparent 40%),
-      radial-gradient(80% 80% at 80% 70%, rgba(254, 207, 103, 0.16), transparent 40%);
+    background: linear-gradient(135deg, #6F7AF5 0%, #9F6FE8 100%);
   }
 
   /* Section container */
