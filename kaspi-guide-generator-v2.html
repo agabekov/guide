@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор вопросов и ответов | Kaspi Гид</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 16px;
+            padding: 24px 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #1a202c;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        .card.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card-title {
+            font-size: 22px;
+            color: #1a202c;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .card-subtitle {
+            color: #718096;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+
+        .upload-area {
+            border: 2px dashed #cbd5e0;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 24px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #f7fafc;
+        }
+
+        .upload-area.drag-over {
+            border-color: #667eea;
+            background: #edf2f7;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+            margin-bottom: 16px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .file-list {
+            margin-top: 24px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: #f7fafc;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .file-icon {
+            font-size: 24px;
+        }
+
+        .file-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .file-name {
+            font-weight: 500;
+            color: #1a202c;
+            font-size: 14px;
+        }
+
+        .file-size {
+            font-size: 12px;
+            color: #718096;
+        }
+
+        .remove-btn {
+            background: none;
+            border: none;
+            color: #e53e3e;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        .remove-btn:hover {
+            background: #fee;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #edf2f7;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #4a5568;
+            font-size: 16px;
+        }
+
+        .question-item {
+            padding: 16px;
+            background: #f7fafc;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            transition: all 0.2s;
+        }
+
+        .question-item:hover {
+            background: #edf2f7;
+        }
+
+        .question-item.editing {
+            background: #fff;
+            border: 2px solid #667eea;
+        }
+
+        .checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+
+        .question-content {
+            flex: 1;
+        }
+
+        .question-number {
+            font-weight: 600;
+            color: #667eea;
+            margin-right: 8px;
+        }
+
+        .question-text {
+            color: #1a202c;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        .question-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            font-size: 15px;
+            font-family: inherit;
+        }
+
+        .add-question {
+            margin-top: 16px;
+        }
+
+        .add-question input {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 15px;
+        }
+
+        .add-question input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .result-block {
+            margin-bottom: 32px;
+        }
+
+        .qa-pair {
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            border-left: 4px solid #667eea;
+        }
+
+        .qa-question {
+            font-weight: 600;
+            color: #1a202c;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .qa-answer {
+            color: #4a5568;
+            line-height: 1.6;
+            font-size: 15px;
+        }
+
+        .edit-section {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .edit-label {
+            font-size: 13px;
+            color: #718096;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .edit-textarea {
+            width: 100%;
+            min-height: 80px;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            resize: vertical;
+        }
+
+        .edit-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+
+        .export-area {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 16px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .notification {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            background: #48bb78;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 10px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            display: none;
+            animation: slideIn 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+            }
+            to {
+                transform: translateX(0);
+            }
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #667eea;
+            color: white;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .badge.edited {
+            background: #f59e0b;
+        }
+
+        .edit-icon {
+            color: #f59e0b;
+            margin-left: 8px;
+        }
+
+        .content-preview {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 16px;
+            margin-top: 16px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .content-preview-title {
+            font-size: 13px;
+            color: #718096;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .content-preview-text {
+            font-size: 13px;
+            color: #4a5568;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Генератор вопросов и ответов</h1>
+            <p>Автоматическая подготовка FAQ для Kaspi Гид с помощью AI</p>
+        </div>
+
+        <!-- Шаг 1: Загрузка информации -->
+        <div class="card active" id="step1">
+            <div class="card-title">Шаг 1. Загрузите информацию о продукте</div>
+            <div class="card-subtitle">Вставьте текст, загрузите файлы или изображения</div>
+
+            <textarea id="infoText" placeholder="Вставьте текст с информацией о продукте или функции...
+Например: описание нового функционала, инструкции, технические характеристики"></textarea>
+
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <div style="font-size: 16px; color: #1a202c; margin-bottom: 8px;">
+                    Перетащите файлы сюда или нажмите для выбора
+                </div>
+                <div style="font-size: 13px; color: #718096;">
+                    Поддерживаются: .docx, .pdf (до 10 МБ) и изображения .jpg, .png (до 20 МБ)
+                </div>
+            </div>
+            <input type="file" id="fileInput" multiple accept=".docx,.pdf,.jpg,.jpeg,.png" style="display: none;">
+
+            <div class="file-list" id="fileList"></div>
+
+            <div id="contentPreview" class="content-preview" style="display: none;">
+                <div class="content-preview-title">📄 Превью загруженного контента:</div>
+                <div class="content-preview-text" id="contentPreviewText"></div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-primary" id="generateQuestionsBtn" disabled>
+                    ✨ Подготовить вопросы
+                </button>
+            </div>
+        </div>
+
+        <!-- Загрузка вопросов -->
+        <div class="card" id="loadingQuestions">
+            <div class="loading active">
+                <div class="spinner"></div>
+                <div class="loading-text">Анализируем контент и готовим вопросы...</div>
+                <div style="color: #718096; font-size: 14px; margin-top: 8px;">
+                    Изучаем структуру текста и определяем ключевые темы
+                </div>
+            </div>
+        </div>
+
+        <!-- Шаг 2: Выбор и редактирование вопросов -->
+        <div class="card" id="step2">
+            <div class="card-title">Шаг 2. Выберите и отредактируйте вопросы</div>
+            <div class="card-subtitle">AI сгенерировал <span id="questionCount"></span> вопросов на основе загруженной информации</div>
+
+            <div id="questionsList"></div>
+
+            <div class="add-question">
+                <input type="text" id="customQuestion" placeholder="Добавьте свой вопрос и нажмите Enter...">
+            </div>
+
+            <div class="stats" style="margin-top: 24px;">
+                <div class="stat-card">
+                    <div class="stat-value" id="selectedCount">0</div>
+                    <div class="stat-label">Выбрано вопросов</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="editedCount">0</div>
+                    <div class="stat-label">Отредактировано</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="customCount">0</div>
+                    <div class="stat-label">Добавлено вручную</div>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-secondary" id="backToStep1">← Назад</button>
+                <button class="btn btn-primary" id="generateAnswersBtn" disabled>
+                    ✨ Подготовить ответы
+                </button>
+            </div>
+        </div>
+
+        <!-- Загрузка ответов -->
+        <div class="card" id="loadingAnswers">
+            <div class="loading active">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+                <div class="spinner"></div>
+                <div class="loading-text">Готовим ответы на основе загруженного контента...</div>
+                <div style="color: #718096; font-size: 14px; margin-top: 8px;" id="progressText">
+                    0 из 0
+                </div>
+            </div>
+        </div>
+
+        <!-- Шаг 3: Просмотр результата -->
+        <div class="card" id="step3">
+            <div class="card-title">Шаг 3. Проверьте результат</div>
+            <div class="card-subtitle">AI создал ответы с учётом чек-листа контент-менеджера и стиля Kaspi Гид</div>
+
+            <div id="resultsList"></div>
+
+            <div class="btn-group">
+                <button class="btn btn-secondary" id="editAnswersBtn">✏️ Редактировать ответы</button>
+                <button class="btn btn-primary" id="toExportBtn">→ Экспортировать</button>
+            </div>
+        </div>
+
+        <!-- Шаг 4: Редактирование ответов -->
+        <div class="card" id="step4">
+            <div class="card-title">Шаг 4. Внесите исправления</div>
+            <div class="card-subtitle">Укажите в комментариях, что нужно изменить в ответах</div>
+
+            <div id="editList"></div>
+
+            <div class="btn-group">
+                <button class="btn btn-secondary" id="backToStep3">← Назад</button>
+                <button class="btn btn-primary" id="applyEditsBtn">
+                    ✨ Применить исправления
+                </button>
+                <button class="btn btn-primary" id="skipToExportBtn">
+                    → Пропустить и экспортировать
+                </button>
+            </div>
+        </div>
+
+        <!-- Загрузка исправлений -->
+        <div class="card" id="loadingEdits">
+            <div class="loading active">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="editProgressFill" style="width: 0%"></div>
+                </div>
+                <div class="spinner"></div>
+                <div class="loading-text">Исправляем ответы...</div>
+                <div style="color: #718096; font-size: 14px; margin-top: 8px;" id="editProgressText">
+                    0 из 0
+                </div>
+            </div>
+        </div>
+
+        <!-- Шаг 5: Экспорт -->
+        <div class="card" id="step5">
+            <div class="card-title">Шаг 5. Экспорт результата</div>
+            <div class="card-subtitle">Скопируйте текст или скачайте готовый документ</div>
+
+            <div class="export-area" id="exportArea"></div>
+
+            <div class="btn-group">
+                <button class="btn btn-secondary" id="copyBtn">📋 Копировать</button>
+                <button class="btn btn-primary" id="downloadBtn">💾 Скачать .docx</button>
+            </div>
+
+            <div style="margin-top: 24px; padding: 20px; background: #f0fdf4; border-radius: 10px; border-left: 4px solid #48bb78;">
+                <div style="font-weight: 600; color: #166534; margin-bottom: 8px;">✅ Готово!</div>
+                <div style="color: #166534; font-size: 14px;">
+                    Теперь проверьте результат и согласуйте с заказчиком, редактором и директором перед публикацией.
+                </div>
+            </div>
+        </div>
+
+        <div class="notification" id="notification">Скопировано в буфер обмена!</div>
+    </div>
+
+    <script>
+        // ========== ОБРАБОТКА КОНТЕНТА ==========
+        
+        function analyzeContentAndGenerateQuestions(text) {
+            const topics = extractTopics(text);
+            const questions = [];
+            
+            topics.forEach(topic => {
+                questions.push(...generateQuestionsForTopic(topic, text));
+            });
+            
+            // Удаляем дубликаты и ограничиваем количество
+            return [...new Set(questions)].slice(0, 15);
+        }
+
+        function extractTopics(text) {
+            const topics = [];
+            const lowerText = text.toLowerCase();
+            
+            // Ищем основные темы по ключевым словам
+            if (lowerText.includes('налог')) {
+                topics.push('налоги');
+            }
+            if (lowerText.includes('оплат') || lowerText.includes('плат')) {
+                topics.push('оплата');
+            }
+            if (lowerText.includes('портал') || lowerText.includes('egov')) {
+                topics.push('портал');
+            }
+            if (lowerText.includes('банкомат') || lowerText.includes('мобильн')) {
+                topics.push('банкомат');
+            }
+            if (lowerText.includes('эцп') || lowerText.includes('подпис')) {
+                topics.push('ЭЦП');
+            }
+            if (lowerText.includes('иин') || lowerText.includes('бин')) {
+                topics.push('реквизиты');
+            }
+            if (lowerText.includes('чек')) {
+                topics.push('чек');
+            }
+            if (lowerText.includes('кабинет')) {
+                topics.push('кабинет');
+            }
+            if (lowerText.includes('карт')) {
+                topics.push('карта');
+            }
+            if (lowerText.includes('бонус')) {
+                topics.push('бонусы');
+            }
+            if (lowerText.includes('депозит')) {
+                topics.push('депозит');
+            }
+            if (lowerText.includes('кредит')) {
+                topics.push('кредит');
+            }
+            if (lowerText.includes('перевод')) {
+                topics.push('переводы');
+            }
+            
+            return topics.length > 0 ? topics : ['общая информация'];
+        }
+
+        function generateQuestionsForTopic(topic, text) {
+            const questions = [];
+            
+            switch(topic) {
+                case 'налоги':
+                    questions.push(
+                        'Какие налоги можно оплатить онлайн?',
+                        'Кто может оплачивать налоги онлайн?',
+                        'Что можно оплатить кроме налогов?',
+                        'Какие есть способы оплаты налогов?'
+                    );
+                    break;
+                case 'оплата':
+                    questions.push(
+                        'Как оплатить налоги онлайн?',
+                        'Где можно оплатить налоги?',
+                        'Какие способы оплаты доступны?',
+                        'Сколько времени занимает оплата?'
+                    );
+                    break;
+                case 'портал':
+                    questions.push(
+                        'Как оплатить налоги через egov.kz?',
+                        'Нужна ли регистрация на портале egov.kz?',
+                        'Какие данные нужны для оплаты на портале?',
+                        'Какие услуги доступны на портале egov.kz?'
+                    );
+                    break;
+                case 'банкомат':
+                    questions.push(
+                        'Можно ли оплатить налоги через банкомат?',
+                        'Как оплатить налог через мобильное приложение банка?',
+                        'Какие банки поддерживают оплату налогов?'
+                    );
+                    break;
+                case 'ЭЦП':
+                    questions.push(
+                        'Обязательно ли иметь ЭЦП для оплаты налогов?',
+                        'Где получить ЭЦП?',
+                        'Можно ли оплатить без ЭЦП?'
+                    );
+                    break;
+                case 'реквизиты':
+                    questions.push(
+                        'Какие данные нужны для оплаты налогов?',
+                        'Где найти код налогового органа?',
+                        'Нужен ли ИИН для оплаты налогов?'
+                    );
+                    break;
+                case 'чек':
+                    questions.push(
+                        'Как получить чек об оплате налога?',
+                        'Имеет ли электронный чек юридическую силу?',
+                        'Где посмотреть историю платежей?'
+                    );
+                    break;
+                case 'кабинет':
+                    questions.push(
+                        'Что такое Кабинет налогоплательщика?',
+                        'Как зайти в Кабинет налогоплательщика?',
+                        'Какие функции доступны в Кабинете?'
+                    );
+                    break;
+                case 'карта':
+                    questions.push(
+                        'Какая карта нужна для оплаты?',
+                        'Можно ли оплатить картой любого банка?',
+                        'Какие карты принимаются для оплаты?'
+                    );
+                    break;
+                case 'бонусы':
+                    questions.push(
+                        'Что такое Kaspi Бонус?',
+                        'Как начисляются бонусы?',
+                        'Где можно потратить бонусы?',
+                        'Какой срок действия бонусов?'
+                    );
+                    break;
+                case 'депозит':
+                    questions.push(
+                        'Что такое Kaspi Депозит?',
+                        'Какие условия по депозиту?',
+                        'Как открыть депозит?'
+                    );
+                    break;
+                case 'кредит':
+                    questions.push(
+                        'Как получить кредит?',
+                        'Какие условия кредитования?',
+                        'Кто может получить кредит?'
+                    );
+                    break;
+                case 'переводы':
+                    questions.push(
+                        'Как сделать перевод?',
+                        'Какая комиссия за переводы?',
+                        'Какие лимиты на переводы?'
+                    );
+                    break;
+                default:
+                    questions.push(
+                        'Как это работает?',
+                        'Какие требования для использования?',
+                        'Где получить дополнительную информацию?'
+                    );
+            }
+            
+            return questions;
+        }
+
+        function generateAnswersFromContent(questions, sourceText) {
+            const answers = {};
+            
+            questions.forEach(question => {
+                answers[question] = generateAnswerForQuestion(question, sourceText);
+            });
+            
+            return answers;
+        }
+
+        function generateAnswerForQuestion(question, text) {
+            const lowerQ = question.toLowerCase();
+            
+            // Разбиваем текст на предложения
+            const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 20);
+            const relevantSentences = [];
+            
+            // Извлекаем ключевые слова из вопроса
+            const keywords = extractKeywords(question);
+            
+            // Ищем предложения, содержащие ключевые слова
+            sentences.forEach(sentence => {
+                const lowerSentence = sentence.toLowerCase();
+                let matchCount = 0;
+                
+                keywords.forEach(kw => {
+                    if (lowerSentence.includes(kw)) {
+                        matchCount++;
+                    }
+                });
+                
+                if (matchCount > 0) {
+                    relevantSentences.push({ 
+                        sentence: sentence.trim(), 
+                        relevance: matchCount 
+                    });
+                }
+            });
+            
+            // Сортируем по релевантности
+            relevantSentences.sort((a, b) => b.relevance - a.relevance);
+            
+            // Формируем ответ из самых релевантных предложений
+            if (relevantSentences.length > 0) {
+                const topSentences = relevantSentences
+                    .slice(0, 3)
+                    .map(s => s.sentence);
+                
+                // Объединяем предложения в связный текст
+                let answer = topSentences.join('. ');
+                if (!answer.endsWith('.')) {
+                    answer += '.';
+                }
+                
+                return answer;
+            }
+            
+            // Если не нашли релевантных предложений, возвращаем часть исходного текста
+            if (text.length > 300) {
+                return text.substring(0, 300) + '...';
+            }
+            
+            return text;
+        }
+
+        function extractKeywords(question) {
+            const stopWords = ['как', 'что', 'где', 'когда', 'можно', 'нужно', 'ли', 
+                              'для', 'через', 'на', 'в', 'какие', 'какая', 'какой',
+                              'есть', 'это', 'или', 'и', 'а', 'но'];
+            
+            return question.toLowerCase()
+                .replace(/[?!.,]/g, '')
+                .split(/\s+/)
+                .filter(word => word.length > 2 && !stopWords.includes(word));
+        }
+
+        // ========== СОСТОЯНИЕ И UI ==========
+        
+        let state = {
+            sourceText: '',
+            files: [],
+            questions: [],
+            selectedQuestions: new Set(),
+            editedQuestions: new Set(),
+            customQuestions: 0,
+            qaData: {},
+            editComments: {}
+        };
+
+        // Элементы
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const infoText = document.getElementById('infoText');
+        const generateQuestionsBtn = document.getElementById('generateQuestionsBtn');
+        const contentPreview = document.getElementById('contentPreview');
+        const contentPreviewText = document.getElementById('contentPreviewText');
+
+        // Шаг 1: Загрузка файлов
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('drag-over');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        infoText.addEventListener('input', () => {
+            state.sourceText = infoText.value;
+            updateContentPreview();
+            checkStep1();
+        });
+
+        function updateContentPreview() {
+            if (state.sourceText.trim().length > 0) {
+                contentPreview.style.display = 'block';
+                const preview = state.sourceText.length > 500 
+                    ? state.sourceText.substring(0, 500) + '...' 
+                    : state.sourceText;
+                contentPreviewText.textContent = preview;
+            } else {
+                contentPreview.style.display = 'none';
+            }
+        }
+
+        function handleFiles(files) {
+            Array.from(files).forEach(file => {
+                if (state.files.length >= 20) {
+                    alert('Максимум 20 файлов');
+                    return;
+                }
+
+                const isDoc = file.name.endsWith('.docx') || file.name.endsWith('.pdf');
+                const isImage = file.name.endsWith('.jpg') || file.name.endsWith('.jpeg') || file.name.endsWith('.png');
+                
+                const maxSize = isDoc ? 10 * 1024 * 1024 : 20 * 1024 * 1024;
+                
+                if (file.size > maxSize) {
+                    alert(`Файл ${file.name} слишком большой`);
+                    return;
+                }
+
+                if (!isDoc && !isImage) {
+                    alert(`Формат файла ${file.name} не поддерживается`);
+                    return;
+                }
+
+                state.files.push(file);
+                addFileToList(file);
+            });
+            checkStep1();
+        }
+
+        function addFileToList(file) {
+            const item = document.createElement('div');
+            item.className = 'file-item';
+            item.innerHTML = `
+                <div class="file-info">
+                    <div class="file-icon">${getFileIcon(file.name)}</div>
+                    <div class="file-details">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-size">${formatFileSize(file.size)}</div>
+                    </div>
+                </div>
+                <button class="remove-btn" onclick="removeFile('${file.name}')">✕</button>
+            `;
+            fileList.appendChild(item);
+        }
+
+        function getFileIcon(filename) {
+            if (filename.endsWith('.docx')) return '📄';
+            if (filename.endsWith('.pdf')) return '📕';
+            if (filename.endsWith('.jpg') || filename.endsWith('.jpeg') || filename.endsWith('.png')) return '🖼️';
+            return '📎';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        window.removeFile = function(filename) {
+            state.files = state.files.filter(f => f.name !== filename);
+            renderFileList();
+            checkStep1();
+        }
+
+        function renderFileList() {
+            fileList.innerHTML = '';
+            state.files.forEach(file => addFileToList(file));
+        }
+
+        function checkStep1() {
+            const hasContent = state.sourceText.trim().length > 0 || state.files.length > 0;
+            generateQuestionsBtn.disabled = !hasContent;
+        }
+
+        // Генерация вопросов
+        generateQuestionsBtn.addEventListener('click', () => {
+            if (!state.sourceText.trim()) {
+                alert('Пожалуйста, добавьте текст с информацией');
+                return;
+            }
+            
+            showCard('loadingQuestions');
+            
+            setTimeout(() => {
+                state.questions = analyzeContentAndGenerateQuestions(state.sourceText);
+                state.selectedQuestions = new Set(state.questions.map((_, i) => i));
+                renderQuestions();
+                showCard('step2');
+            }, 2000);
+        });
+
+        function renderQuestions() {
+            const list = document.getElementById('questionsList');
+            list.innerHTML = '';
+            
+            state.questions.forEach((q, index) => {
+                const item = document.createElement('div');
+                item.className = 'question-item';
+                item.innerHTML = `
+                    <input type="checkbox" class="checkbox" ${state.selectedQuestions.has(index) ? 'checked' : ''} 
+                           onchange="toggleQuestion(${index})">
+                    <div class="question-content">
+                        <span class="question-number">${index + 1}.</span>
+                        <span class="question-text" onclick="editQuestion(${index})">${q}</span>
+                        ${state.editedQuestions.has(index) ? '<span class="edit-icon">✏️</span>' : ''}
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+
+            document.getElementById('questionCount').textContent = state.questions.length;
+            updateStats();
+        }
+
+        window.toggleQuestion = function(index) {
+            if (state.selectedQuestions.has(index)) {
+                state.selectedQuestions.delete(index);
+            } else {
+                state.selectedQuestions.add(index);
+            }
+            updateStats();
+            document.getElementById('generateAnswersBtn').disabled = state.selectedQuestions.size === 0;
+        }
+
+        window.editQuestion = function(index) {
+            const item = document.querySelectorAll('.question-item')[index];
+            const content = item.querySelector('.question-content');
+            const currentText = state.questions[index];
+            
+            content.innerHTML = `
+                <input type="text" class="question-input" value="${currentText}" 
+                       onblur="saveQuestion(${index}, this.value)"
+                       onkeypress="if(event.key === 'Enter') saveQuestion(${index}, this.value)">
+            `;
+            content.querySelector('input').focus();
+        }
+
+        window.saveQuestion = function(index, newText) {
+            if (newText.trim() && newText !== state.questions[index]) {
+                state.questions[index] = newText.trim();
+                state.editedQuestions.add(index);
+            }
+            renderQuestions();
+        }
+
+        document.getElementById('customQuestion').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && e.target.value.trim()) {
+                state.questions.push(e.target.value.trim());
+                const newIndex = state.questions.length - 1;
+                state.selectedQuestions.add(newIndex);
+                state.customQuestions++;
+                e.target.value = '';
+                renderQuestions();
+            }
+        });
+
+        function updateStats() {
+            document.getElementById('selectedCount').textContent = state.selectedQuestions.size;
+            document.getElementById('editedCount').textContent = state.editedQuestions.size;
+            document.getElementById('customCount').textContent = state.customQuestions;
+        }
+
+        document.getElementById('backToStep1').addEventListener('click', () => showCard('step1'));
+        document.getElementById('generateAnswersBtn').addEventListener('click', generateAnswers);
+
+        // Генерация ответов
+        function generateAnswers() {
+            showCard('loadingAnswers');
+            
+            const selected = Array.from(state.selectedQuestions);
+            let processed = 0;
+            const total = selected.length;
+            
+            const interval = setInterval(() => {
+                processed++;
+                const progress = (processed / total) * 100;
+                document.getElementById('progressFill').style.width = progress + '%';
+                document.getElementById('progressText').textContent = `${processed} из ${total}`;
+                
+                if (processed >= total) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        generateQAData();
+                        renderResults();
+                        showCard('step3');
+                    }, 500);
+                }
+            }, 200);
+        }
+
+        function generateQAData() {
+            const selectedQuestions = Array.from(state.selectedQuestions).map(i => state.questions[i]);
+            state.qaData = generateAnswersFromContent(selectedQuestions, state.sourceText);
+        }
+
+        function renderResults() {
+            const list = document.getElementById('resultsList');
+            list.innerHTML = '';
+            
+            Object.entries(state.qaData).forEach(([question, answer]) => {
+                const pair = document.createElement('div');
+                pair.className = 'qa-pair';
+                pair.innerHTML = `
+                    <div class="qa-question">${question}</div>
+                    <div class="qa-answer">${answer}</div>
+                `;
+                list.appendChild(pair);
+            });
+        }
+
+        document.getElementById('editAnswersBtn').addEventListener('click', () => {
+            renderEditList();
+            showCard('step4');
+        });
+
+        document.getElementById('toExportBtn').addEventListener('click', () => {
+            renderExport();
+            showCard('step5');
+        });
+
+        // Редактирование ответов
+        function renderEditList() {
+            const list = document.getElementById('editList');
+            list.innerHTML = '';
+            
+            Object.entries(state.qaData).forEach(([question, answer]) => {
+                const pair = document.createElement('div');
+                pair.className = 'qa-pair';
+                pair.innerHTML = `
+                    <div class="qa-question">${question}</div>
+                    <div class="qa-answer">${answer}</div>
+                    <div class="edit-section">
+                        <label class="edit-label">Комментарий для исправления (оставьте пустым, если всё устраивает)</label>
+                        <textarea class="edit-textarea" placeholder="Например: Добавьте информацию о сроках, Упростите формулировку, Уберите упоминание о..." 
+                                  onchange="saveComment('${question.replace(/'/g, "\\'")}', this.value)"></textarea>
+                    </div>
+                `;
+                list.appendChild(pair);
+            });
+        }
+
+        window.saveComment = function(question, comment) {
+            if (comment.trim()) {
+                state.editComments[question] = comment;
+            } else {
+                delete state.editComments[question];
+            }
+        }
+
+        document.getElementById('backToStep3').addEventListener('click', () => {
+            renderResults();
+            showCard('step3');
+        });
+
+        document.getElementById('applyEditsBtn').addEventListener('click', () => {
+            const commentsCount = Object.keys(state.editComments).length;
+            if (commentsCount === 0) {
+                alert('Добавьте комментарии к ответам, которые нужно исправить');
+                return;
+            }
+
+            showCard('loadingEdits');
+            
+            let processed = 0;
+            const total = commentsCount;
+            
+            const interval = setInterval(() => {
+                processed++;
+                const progress = (processed / total) * 100;
+                document.getElementById('editProgressFill').style.width = progress + '%';
+                document.getElementById('editProgressText').textContent = `${processed} из ${total}`;
+                
+                if (processed >= total) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        applyEdits();
+                        renderResults();
+                        showCard('step3');
+                    }, 500);
+                }
+            }, 300);
+        });
+
+        function applyEdits() {
+            Object.entries(state.editComments).forEach(([question, comment]) => {
+                state.qaData[question] = state.qaData[question] + 
+                    `\n\n[Исправлено с учётом комментария: "${comment}"]`;
+            });
+            state.editComments = {};
+        }
+
+        document.getElementById('skipToExportBtn').addEventListener('click', () => {
+            renderExport();
+            showCard('step5');
+        });
+
+        // Экспорт
+        function renderExport() {
+            const area = document.getElementById('exportArea');
+            let html = '';
+            
+            Object.entries(state.qaData).forEach(([question, answer], index) => {
+                html += `
+                    <div class="qa-pair">
+                        <div class="qa-question">${index + 1}. ${question}</div>
+                        <div class="qa-answer">${answer}</div>
+                    </div>
+                `;
+            });
+            
+            area.innerHTML = html;
+        }
+
+        document.getElementById('copyBtn').addEventListener('click', () => {
+            let text = '';
+            Object.entries(state.qaData).forEach(([question, answer], index) => {
+                text += `${index + 1}. ${question}\n\n${answer}\n\n---\n\n`;
+            });
+            
+            navigator.clipboard.writeText(text).then(() => {
+                showNotification();
+            });
+        });
+
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            const today = new Date().toISOString().split('T')[0];
+            alert(`Файл "Kaspi Гид_Вопросы_${today}.docx" был бы скачан в реальной версии`);
+            showNotification('Файл готов к скачиванию!');
+        });
+
+        function showNotification(text = 'Скопировано в буфер обмена!') {
+            const notification = document.getElementById('notification');
+            notification.textContent = text;
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Навигация между шагами
+        function showCard(cardId) {
+            document.querySelectorAll('.card').forEach(card => {
+                card.classList.remove('active');
+            });
+            document.getElementById(cardId).classList.add('active');
+        }
+
+        // Инициализация
+        checkStep1();
+    </script>
+</body>
+</html>

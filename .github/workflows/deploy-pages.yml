@@ -18,7 +18,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+      VITE_GROQ_API_KEY: ${{ secrets.VITE_GROQ_API_KEY }}
     defaults:
       run:
         working-directory: ./kaspi-guide

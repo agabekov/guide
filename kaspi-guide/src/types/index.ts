@@ -1,3 +1,37 @@
+// Wizard types for FAQ Generator
+
+export interface UploadedFile {
+  id: string;
+  name: string;
+  size: number;
+  type: 'doc' | 'image';
+  file: File;
+}
+
+export interface Question {
+  id: string;
+  text: string;
+  selected: boolean;
+  edited: boolean;
+  custom: boolean;
+}
+
+export interface QAPair {
+  id: string;
+  question: string;
+  answer: string;
+}
+
+export type WizardStep =
+  | 'step1'
+  | 'loadingQuestions'
+  | 'step2'
+  | 'loadingAnswers'
+  | 'step3'
+  | 'step4'
+  | 'loadingEdits'
+  | 'step5';
+
 // FAQ Item представляет отдельный вопрос-ответ
 export interface FAQItem {
   id: string;
