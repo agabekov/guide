@@ -1,3 +1,6 @@
+import editorChecklistRaw from '../data/editor-checklist.txt?raw';
+import type { FAQItem } from '../types';
+
 const apiKey = import.meta.env.VITE_GROQ_API_KEY;
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
@@ -11,6 +14,17 @@ const MODEL_NAMES = [
   'moonshotai/kimi-k2-instruct',       // Kimi - отличная для многоязычности
 ];
 
+const editorGuidelines = editorChecklistRaw
+  .split('\n')
+  .map((line) => line.trim())
+  .filter((line) => line.length > 0)
+  .join('\n');
+
+const editorGuidelinesPrompt = `
+Редакторский чек-лист контент-менеджера (учитывай все пункты при генерации):
+${editorGuidelines}
+`;
+
 export interface GeneratedQuestion {
   id: string;
   question: string;
@@ -23,13 +37,43 @@ export interface GeneratedFAQ {
 }
 
 // Анализ стиля существующих FAQ
-const analyzeFAQStyle = (faqData: any[]): string => {
+const trimText = (text: string, maxLength: number): string => {
+  const normalized = (text || '').replace(/\s+/g, ' ').trim();
+  if (normalized.length <= maxLength) return normalized;
+  return `${normalized.slice(0, maxLength)}...`;
+};
+
+const pickStyleExamples = (faqData: FAQItem[], sampleSize: number): FAQItem[] => {
+  if (faqData.length <= sampleSize) return faqData;
+
+  const byUsefulness = [...faqData].sort(
+    (a, b) => (b.usefulness || 0) - (a.usefulness || 0)
+  );
+  const top = byUsefulness.slice(0, Math.ceil(sampleSize / 2));
+
+  const randomPool = [...faqData]
+    .sort(() => 0.5 - Math.random())
+    .slice(0, sampleSize);
+
+  const combined = [...top, ...randomPool];
+  const uniqueByQuestion = new Map<string, FAQItem>();
+
+  combined.forEach((faq) => {
+    if (!uniqueByQuestion.has(faq.question)) {
+      uniqueByQuestion.set(faq.question, faq);
+    }
+  });
+
+  return Array.from(uniqueByQuestion.values()).slice(0, sampleSize);
+};
+
+const analyzeFAQStyle = (faqData: FAQItem[]): string => {
   if (!faqData || faqData.length === 0) return '';
 
-  // Берем примеры из базы
-  const examples = faqData.slice(0, 5).map(faq => ({
-    question: faq.question,
-    answer: faq.answer
+  // Берем примеры из базы по полезности и случайной выборке, чтобы отражать стиль всех MD
+  const examples = pickStyleExamples(faqData, 12).map(faq => ({
+    question: trimText(faq.question, 180),
+    answer: trimText(faq.answer, 700),
   }));
 
   return `
@@ -106,18 +150,20 @@ export const generateQuestions = async (
 Ты - эксперт по созданию FAQ для финансового сервиса Kaspi.kz.
 
 ${styleAnalysis}
+${editorGuidelinesPrompt}
 
-На основе анализа стиля существующих FAQ, сгенерируй список из 10-15 вопросов, которые пользователи могут задать по следующему тексту:
+На основе анализа стиля существующих FAQ и редакторского чек-листа, сгенерируй список из 10-15 вопросов, которые пользователи могут задать по следующему тексту:
 
 ИСХОДНЫЙ ТЕКСТ:
 ${sourceText}
 
 ТРЕБОВАНИЯ:
-1. Вопросы должны быть конкретными и практичными
-2. Используй стиль существующих вопросов из примеров
-3. Вопросы должны начинаться с "Как...", "Что...", "Где...", "Нужна ли..." и т.д.
-4. Ориентируйся на реальные потребности пользователей Kaspi.kz
-5. Вопросы должны быть на русском языке
+1. Соблюдай редакторский чек-лист (см. выше)
+2. Вопросы должны быть конкретными и практичными
+3. Используй стиль существующих вопросов из примеров
+4. Вопросы должны начинаться с "Как...", "Что...", "Где...", "Нужна ли..." и т.д.
+5. Ориентируйся на реальные потребности пользователей Kaspi.kz
+6. Вопросы должны быть на русском языке
 
 ФОРМАТ ОТВЕТА:
 Верни только список вопросов, каждый вопрос на новой строке, без нумерации.
@@ -202,8 +248,9 @@ export const generateAnswers = async (
 Ты - эксперт по созданию FAQ для финансового сервиса Kaspi.kz.
 
 ${styleAnalysis}
+${editorGuidelinesPrompt}
 
-На основе анализа стиля существующих FAQ, создай краткий и понятный ответ на вопрос.
+На основе анализа стиля существующих FAQ и требований чек-листа, создай краткий и понятный ответ на вопрос.
 
 ИСХОДНЫЙ ТЕКСТ (источник информации):
 ${sourceText}
@@ -212,16 +259,17 @@ ${sourceText}
 ${question}
 
 ТРЕБОВАНИЯ К ОТВЕТУ:
-1. Ответ должен быть кратким и конкретным (2-5 абзацев)
-2. Используй стиль существующих ответов из примеров
-3. Структурируй информацию с помощью:
+1. Соблюдай редакторский чек-лист (см. выше)
+2. Ответ должен быть кратким и конкретным (2-5 абзацев)
+3. Используй стиль существующих ответов из примеров
+4. Структурируй информацию с помощью:
    - Коротких абзацев
    - Списков (где уместно)
    - Пошаговых инструкций (если это инструкция)
-4. Используй простой язык, понятный обычному пользователю
-5. Упоминай приложение Kaspi.kz там, где это уместно
-6. Ответ должен быть на русском языке
-7. Не используй markdown форматирование (**, ##, и т.д.)
+5. Используй простой язык, понятный обычному пользователю
+6. Упоминай приложение Kaspi.kz там, где это уместно
+7. Ответ должен быть на русском языке
+8. Не используй markdown форматирование (**, ##, и т.д.)
 
 ФОРМАТ ОТВЕТА:
 Верни только текст ответа, без заголовков и дополнительных пояснений.
