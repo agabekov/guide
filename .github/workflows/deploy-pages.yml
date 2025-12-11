@@ -11,12 +11,15 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./kaspi-guide
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,6 +29,7 @@ jobs:
         with:
           node-version: 20
           cache: npm
+          cache-dependency-path: ./kaspi-guide/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -39,7 +43,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: ./kaspi-guide/dist
 
   deploy:
     needs: build
