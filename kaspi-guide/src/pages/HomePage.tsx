@@ -149,19 +149,19 @@ const HomePage: React.FC = () => {
     setProgressCurrent(0);
     setProgressTotal(selectedQuestions.length);
 
-    // Simulate progress
-    const progressInterval = setInterval(() => {
-      setProgressCurrent((prev) => {
-        const next = prev + 1;
-        setProgressValue((next / selectedQuestions.length) * 90);
-        return Math.min(next, selectedQuestions.length);
-      });
-    }, 500);
-
     try {
-      const generated = await generateAnswers(selectedQuestions, sourceText, faqData);
+      const generated = await generateAnswers(
+        selectedQuestions,
+        sourceText,
+        faqData,
+        (current, total) => {
+          // Реальный прогресс от API
+          setProgressCurrent(current);
+          setProgressTotal(total);
+          setProgressValue((current / total) * 100);
+        }
+      );
 
-      clearInterval(progressInterval);
       setProgressValue(100);
 
       const newQAData: QAPair[] = generated.map((faq, i) => ({
@@ -177,7 +177,6 @@ const HomePage: React.FC = () => {
         setProgressValue(0);
       }, 500);
     } catch (error: any) {
-      clearInterval(progressInterval);
       alert(error.message || 'Ошибка при генерации ответов');
       setCurrentStep('step2');
     }
@@ -197,15 +196,6 @@ const HomePage: React.FC = () => {
     setProgressCurrent(0);
     setProgressTotal(commentsToApply.length);
 
-    // Simulate progress
-    const progressInterval = setInterval(() => {
-      setProgressCurrent((prev) => {
-        const next = prev + 1;
-        setProgressValue((next / commentsToApply.length) * 90);
-        return Math.min(next, commentsToApply.length);
-      });
-    }, 300);
-
     try {
       // Get questions that need editing
       const questionsToEdit = commentsToApply.map(([qaId, comment]) => {
@@ -213,9 +203,18 @@ const HomePage: React.FC = () => {
         return `${qa?.question}\n[Комментарий редактора: ${comment}]`;
       });
 
-      const regenerated = await generateAnswers(questionsToEdit, sourceText, faqData);
+      const regenerated = await generateAnswers(
+        questionsToEdit,
+        sourceText,
+        faqData,
+        (current, total) => {
+          // Реальный прогресс от API
+          setProgressCurrent(current);
+          setProgressTotal(total);
+          setProgressValue((current / total) * 100);
+        }
+      );
 
-      clearInterval(progressInterval);
       setProgressValue(100);
 
       // Update only edited Q&A pairs
@@ -236,7 +235,6 @@ const HomePage: React.FC = () => {
         setProgressValue(0);
       }, 500);
     } catch (error: any) {
-      clearInterval(progressInterval);
       alert(error.message || 'Ошибка при исправлении ответов');
       setCurrentStep('step4');
     }
