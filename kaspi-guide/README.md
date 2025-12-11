@@ -72,6 +72,13 @@ npm install
 npm run build:data
 ```
 
+### Настройка окружения
+
+```bash
+cp .env.example .env
+# Добавьте ваш ключ в VITE_GEMINI_API_KEY
+```
+
 ### Разработка
 
 ```bash

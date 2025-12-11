@@ -1,7 +1,12 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const API_KEY = 'AIzaSyB6C-23CCxy33Wd3ZsvRsPAWAa2ZAt5DEk';
-const genAI = new GoogleGenerativeAI(API_KEY);
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
+if (!apiKey) {
+  throw new Error('Missing Gemini API key. Set VITE_GEMINI_API_KEY in your environment.');
+}
+
+const genAI = new GoogleGenerativeAI(apiKey);
 
 // Пробуем v1 и v1beta (хотя для ключа сейчас работают v1 модели 2.x)
 const API_VERSIONS = ['v1', 'v1beta'];
