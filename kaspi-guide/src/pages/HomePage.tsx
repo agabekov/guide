@@ -1,7 +1,22 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Sparkles, FileText, CheckSquare, Download, ArrowLeft, ArrowRight, Copy, Check } from 'lucide-react';
+import {
+  Sparkles,
+  FileText,
+  CheckSquare,
+  Download,
+  ArrowLeft,
+  ArrowRight,
+  Copy,
+  Check,
+  Upload,
+  Edit2,
+  Plus,
+  Trash,
+  Repeat,
+  Image as ImageIcon,
+} from 'lucide-react';
 import { generateQuestions, generateAnswers, type GeneratedQuestion, type GeneratedFAQ } from '../services/geminiService';
 import faqData from '../data/faq.json';
 
@@ -34,15 +49,31 @@ const stepsFlow: Array<{ key: StepKey; number: number; title: string; descriptio
   },
 ];
 
+type UploadItem = {
+  id: string;
+  name: string;
+  size: number;
+  kind: 'doc' | 'image';
+  preview?: string;
+};
+
+type ExtendedFAQ = GeneratedFAQ & { id: string };
+
 const HomePage: React.FC = () => {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [sourceText, setSourceText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [step, setStep] = useState<StepKey>('input');
   const [questions, setQuestions] = useState<GeneratedQuestion[]>([]);
-  const [generatedFAQs, setGeneratedFAQs] = useState<GeneratedFAQ[]>([]);
+  const [generatedFAQs, setGeneratedFAQs] = useState<ExtendedFAQ[]>([]);
   const [error, setError] = useState<string>('');
   const [copied, setCopied] = useState(false);
+  const [uploads, setUploads] = useState<UploadItem[]>([]);
+  const [manualQuestion, setManualQuestion] = useState('');
+  const [editingQuestion, setEditingQuestion] = useState<{ id: string; text: string } | null>(null);
+  const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
+  const [progressValue, setProgressValue] = useState(0);
+  const progressTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const handleGenerateQuestions = async () => {
     if (!sourceText.trim()) return;
@@ -52,7 +83,7 @@ const HomePage: React.FC = () => {
 
     try {
       const generated = await generateQuestions(sourceText, faqData);
-      setQuestions(generated);
+      setQuestions(generated.map((q) => ({ ...q, selected: true })));
       setStep('questions');
     } catch (err: any) {
       setError(err.message || 'Произошла ошибка при генерации вопросов');
@@ -62,23 +93,45 @@ const HomePage: React.FC = () => {
   };
 
   const toggleQuestion = (id: string) => {
-    setQuestions(prev => prev.map(q =>
-      q.id === id ? { ...q, selected: !q.selected } : q
-    ));
+    setQuestions((prev) =>
+      prev.map((q) =>
+        q.id === id ? { ...q, selected: !q.selected } : q
+      )
+    );
   };
 
   const selectAll = () => {
-    setQuestions(prev => prev.map(q => ({ ...q, selected: true })));
+    setQuestions((prev) => prev.map((q) => ({ ...q, selected: true })));
   };
 
   const deselectAll = () => {
-    setQuestions(prev => prev.map(q => ({ ...q, selected: false })));
+    setQuestions((prev) => prev.map((q) => ({ ...q, selected: false })));
+  };
+
+  const startProgress = () => {
+    if (progressTimer.current) clearInterval(progressTimer.current);
+    setProgressValue(12);
+    progressTimer.current = setInterval(() => {
+      setProgressValue((val) => Math.min(val + Math.random() * 10, 92));
+    }, 420);
+  };
+
+  const stopProgress = (value = 100) => {
+    if (progressTimer.current) clearInterval(progressTimer.current);
+    setProgressValue(value);
+    setTimeout(() => setProgressValue(0), 600);
   };
 
   const handleGenerateAnswers = async () => {
-    const selectedQuestions = questions.filter(q => q.selected).map(q => q.question);
+    const selectedQuestions = questions.filter((q) => q.selected);
+    const questionsForPrompt = selectedQuestions.map((q) => {
+      const note = reviewNotes[q.id];
+      return note?.trim()
+        ? `${q.question}\nКомментарий редактора: ${note}`
+        : q.question;
+    });
 
-    if (selectedQuestions.length === 0) {
+    if (questionsForPrompt.length === 0) {
       setError('Выберите хотя бы один вопрос');
       return;
     }
@@ -86,23 +139,60 @@ const HomePage: React.FC = () => {
     setIsGenerating(true);
     setError('');
     setStep('answers');
+    startProgress();
 
     try {
-      const faqs = await generateAnswers(selectedQuestions, sourceText, faqData);
-      setGeneratedFAQs(faqs);
+      const faqs = await generateAnswers(questionsForPrompt, sourceText, faqData);
+      const withIds: ExtendedFAQ[] = faqs.map((faq, index) => ({
+        ...faq,
+        id: selectedQuestions[index]?.id || `${faq.question}-${index}`,
+      }));
+      setGeneratedFAQs(withIds);
       setStep('result');
     } catch (err: any) {
       setError(err.message || 'Произошла ошибка при генерации ответов');
       setStep('questions');
     } finally {
+      stopProgress();
+      setIsGenerating(false);
+    }
+  };
+
+  const handleApplyFixes = async () => {
+    const toFix = generatedFAQs.filter((faq) => reviewNotes[faq.id]?.trim());
+    if (toFix.length === 0) {
+      setError('Добавьте комментарии к вопросам, которые нужно исправить');
+      return;
+    }
+
+    setIsGenerating(true);
+    setError('');
+    setStep('answers');
+    startProgress();
+
+    try {
+      const fixPrompts = toFix.map((faq) => `${faq.question}\nКомментарий редактора: ${reviewNotes[faq.id]}`);
+      const fixed = await generateAnswers(fixPrompts, sourceText, faqData);
+      setGeneratedFAQs((prev) =>
+        prev.map((faq) => {
+          const idx = toFix.findIndex((item) => item.id === faq.id);
+          return idx !== -1 ? { ...faq, answer: fixed[idx].answer } : faq;
+        })
+      );
+      setStep('result');
+    } catch (err: any) {
+      setError(err.message || 'Не удалось применить исправления. Попробуйте снова.');
+      setStep('result');
+    } finally {
+      stopProgress();
       setIsGenerating(false);
     }
   };
 
   const handleExport = () => {
-    const text = generatedFAQs.map((faq, i) =>
-      `${i + 1}. ${faq.question}\n${faq.answer}\n\n`
-    ).join('');
+    const text = generatedFAQs
+      .map((faq, i) => `${i + 1}. ${faq.question}\n${faq.answer}\n\n`)
+      .join('');
 
     const blob = new Blob([text], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -116,9 +206,9 @@ const HomePage: React.FC = () => {
   };
 
   const handleCopy = () => {
-    const text = generatedFAQs.map((faq, i) =>
-      `${i + 1}. ${faq.question}\n${faq.answer}\n`
-    ).join('\n');
+    const text = generatedFAQs
+      .map((faq, i) => `${i + 1}. ${faq.question}\n${faq.answer}\n`)
+      .join('\n');
 
     navigator.clipboard.writeText(text);
     setCopied(true);
@@ -131,9 +221,12 @@ const HomePage: React.FC = () => {
     setGeneratedFAQs([]);
     setError('');
     setStep('input');
+    setManualQuestion('');
+    setUploads([]);
+    setReviewNotes({});
   };
 
-  const selectedCount = questions.filter(q => q.selected).length;
+  const selectedCount = questions.filter((q) => q.selected).length;
   const currentStepIndex = stepsFlow.findIndex((item) => item.key === step);
 
   const scrollToInput = () => {
@@ -143,6 +236,87 @@ const HomePage: React.FC = () => {
       textareaRef.current?.focus();
     }, 50);
   };
+
+  const formatFileSize = (size: number) => {
+    if (size >= 1_048_576) return `${(size / 1_048_576).toFixed(1)} МБ`;
+    return `${Math.round(size / 1024)} КБ`;
+  };
+
+  const handleFilesSelect = (files: FileList | null, kind: 'doc' | 'image') => {
+    if (!files) return;
+    const maxSize = kind === 'doc' ? 10 * 1024 * 1024 : 20 * 1024 * 1024;
+    const acceptedDocs = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ];
+    const acceptedImages = ['image/png', 'image/jpeg'];
+
+    const newItems: UploadItem[] = [];
+
+    Array.from(files).forEach((file) => {
+      if (file.size > maxSize) {
+        setError(`Файл ${file.name} превышает лимит ${kind === 'doc' ? '10 МБ' : '20 МБ'}`);
+        return;
+      }
+      if (kind === 'doc' && !acceptedDocs.includes(file.type)) {
+        setError('Поддерживаются только .pdf и .docx');
+        return;
+      }
+      if (kind === 'image' && !acceptedImages.includes(file.type)) {
+        setError('Поддерживаются только .jpg и .png');
+        return;
+      }
+
+      const item: UploadItem = {
+        id: `${kind}-${Date.now()}-${file.name}`,
+        name: file.name,
+        size: file.size,
+        kind,
+      };
+
+      if (kind === 'image') {
+        item.preview = URL.createObjectURL(file);
+      }
+
+      newItems.push(item);
+    });
+
+    if (newItems.length) {
+      setUploads((prev) => [...prev, ...newItems].slice(0, 20));
+    }
+  };
+
+  const removeUpload = (id: string) => {
+    setUploads((prev) => prev.filter((u) => u.id !== id));
+  };
+
+  const handleAddManualQuestion = () => {
+    if (!manualQuestion.trim()) return;
+    const newQuestion: GeneratedQuestion = {
+      id: `manual-${Date.now()}`,
+      question: manualQuestion.trim(),
+      selected: true,
+    };
+    setQuestions((prev) => [...prev, newQuestion]);
+    setManualQuestion('');
+  };
+
+  const handleEditSubmit = (id: string) => {
+    if (!editingQuestion) return;
+    setQuestions((prev) =>
+      prev.map((q) => (q.id === id ? { ...q, question: editingQuestion.text.trim() || q.question } : q))
+    );
+    setEditingQuestion(null);
+  };
+
+  const sortedQuestions = questions.map((q, index) => ({ ...q, order: index + 1 }));
+
+  useEffect(() => {
+    return () => {
+      if (progressTimer.current) clearInterval(progressTimer.current);
+      uploads.forEach((u) => u.preview && URL.revokeObjectURL(u.preview));
+    };
+  }, [uploads]);
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -362,13 +536,116 @@ const HomePage: React.FC = () => {
                   </div>
                 </div>
 
-                <textarea
-                  ref={textareaRef}
-                  value={sourceText}
-                  onChange={(e) => setSourceText(e.target.value)}
-                  placeholder="Вставьте текст здесь..."
-                  className="w-full min-h-[22rem] px-4 py-3 border border-kaspi-sand rounded-xl resize-none focus:border-kaspi-red focus:outline-none transition-colors font-body text-kaspi-dark bg-white/90 shadow-inner"
-                />
+                <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+                  <div className="space-y-2">
+                    <textarea
+                      ref={textareaRef}
+                      value={sourceText}
+                      onChange={(e) => setSourceText(e.target.value.slice(0, 10000))}
+                      placeholder="Вставьте текст здесь..."
+                      className="w-full min-h-[22rem] px-4 py-3 border border-kaspi-sand rounded-xl resize-none focus:border-kaspi-red focus:outline-none transition-colors font-body text-kaspi-dark bg-white/90 shadow-inner"
+                    />
+                    <p className="text-xs text-kaspi-gray">
+                      {sourceText.length}/10 000 символов · переносы строк сохранятся
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div
+                      className="border-2 border-dashed border-kaspi-red/25 rounded-2xl p-4 bg-white/70 hover:border-kaspi-red/45 transition cursor-pointer"
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        handleFilesSelect(e.dataTransfer.files, 'doc');
+                      }}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-kaspi-red/10 flex items-center justify-center">
+                          <Upload className="w-5 h-5 text-kaspi-red" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-semibold text-kaspi-dark">Документы .pdf, .docx</p>
+                          <p className="text-xs text-kaspi-gray">До 10 МБ, drag&drop поддерживается</p>
+                        </div>
+                        <label className="btn-secondary text-xs px-3 py-2">
+                          <input
+                            type="file"
+                            accept=".pdf,.docx"
+                            multiple
+                            className="hidden"
+                            onChange={(e) => handleFilesSelect(e.target.files, 'doc')}
+                          />
+                          Выбрать
+                        </label>
+                      </div>
+                    </div>
+
+                    <div
+                      className="border-2 border-dashed border-kaspi-red/25 rounded-2xl p-4 bg-white/70 hover:border-kaspi-red/45 transition cursor-pointer"
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        handleFilesSelect(e.dataTransfer.files, 'image');
+                      }}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-kaspi-red/10 flex items-center justify-center">
+                          <ImageIcon className="w-5 h-5 text-kaspi-red" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-semibold text-kaspi-dark">Скриншоты .jpg, .png</p>
+                          <p className="text-xs text-kaspi-gray">До 20 МБ, можно несколько файлов</p>
+                        </div>
+                        <label className="btn-secondary text-xs px-3 py-2">
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg"
+                            multiple
+                            className="hidden"
+                            onChange={(e) => handleFilesSelect(e.target.files, 'image')}
+                          />
+                          Загрузить
+                        </label>
+                      </div>
+                    </div>
+
+                    {uploads.length > 0 && (
+                      <div className="rounded-xl border border-kaspi-sand bg-white/85 p-3 space-y-2 max-h-48 overflow-auto">
+                        <div className="flex items-center justify-between text-xs text-kaspi-gray">
+                          <span>Загружено {uploads.length} / 20</span>
+                          <span>Документы до 10 МБ · Изображения до 20 МБ</span>
+                        </div>
+                        <div className="space-y-2">
+                          {uploads.map((file) => (
+                            <div
+                              key={file.id}
+                              className="flex items-center gap-3 rounded-lg border border-white/80 bg-white px-3 py-2"
+                            >
+                              <div className="w-8 h-8 rounded-lg bg-kaspi-red/10 flex items-center justify-center">
+                                {file.kind === 'doc' ? (
+                                  <FileText className="w-4 h-4 text-kaspi-red" />
+                                ) : (
+                                  <ImageIcon className="w-4 h-4 text-kaspi-red" />
+                                )}
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-kaspi-dark truncate">{file.name}</p>
+                                <p className="text-xs text-kaspi-gray">{formatFileSize(file.size)}</p>
+                              </div>
+                              <button
+                                onClick={() => removeUpload(file.id)}
+                                className="text-kaspi-gray hover:text-kaspi-red"
+                                aria-label="Удалить файл"
+                              >
+                                <Trash className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
 
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <p className="text-sm text-kaspi-gray">
@@ -428,7 +705,7 @@ const HomePage: React.FC = () => {
               </div>
 
               <div className="space-y-3 mb-6 max-h-[28rem] overflow-y-auto pr-1">
-                {questions.map((q, index) => (
+                {sortedQuestions.map((q) => (
                   <label
                     key={q.id}
                     className={`group flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all ${
@@ -444,18 +721,68 @@ const HomePage: React.FC = () => {
                       className="mt-1 w-5 h-5 text-kaspi-red rounded focus:ring-kaspi-red"
                     />
                     <div className="flex-1">
-                      <p className="text-kaspi-dark font-medium leading-relaxed">
-                        {index + 1}. {q.question}
-                      </p>
+                      {editingQuestion?.id === q.id ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            value={editingQuestion.text}
+                            onChange={(e) => setEditingQuestion({ id: q.id, text: e.target.value })}
+                            onBlur={() => handleEditSubmit(q.id)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleEditSubmit(q.id);
+                              if (e.key === 'Escape') setEditingQuestion(null);
+                            }}
+                            autoFocus
+                            className="w-full input text-sm"
+                          />
+                          <button
+                            onClick={() => handleEditSubmit(q.id)}
+                            className="btn-secondary text-xs px-3 py-2"
+                          >
+                            Сохранить
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-start gap-2">
+                          <p className="text-kaspi-dark font-medium leading-relaxed">
+                            {q.order}. {q.question}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setEditingQuestion({ id: q.id, text: q.question })}
+                            className="text-kaspi-gray hover:text-kaspi-red"
+                            aria-label="Редактировать"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
                       <p className="text-xs text-kaspi-gray mt-1">
-                        AI предложил вопрос на основе вашего текста
+                        AI предложил вопрос · можно изменить формулировку
                       </p>
                     </div>
-                    {q.selected && (
-                      <Check className="w-5 h-5 text-kaspi-red" />
-                    )}
+                    {q.selected && <Check className="w-5 h-5 text-kaspi-red" />}
                   </label>
                 ))}
+              </div>
+
+              <div className="rounded-xl border border-kaspi-sand bg-white/85 p-4 mb-6">
+                <p className="text-sm font-semibold text-kaspi-dark mb-2">Добавьте свои вопросы</p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <input
+                    value={manualQuestion}
+                    onChange={(e) => setManualQuestion(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddManualQuestion()}
+                    placeholder="Добавьте свой вопрос"
+                    className="input flex-1"
+                  />
+                  <button onClick={handleAddManualQuestion} className="btn-primary flex items-center gap-2">
+                    <Plus className="w-5 h-5" />
+                    <span>Добавить</span>
+                  </button>
+                </div>
+                <p className="text-xs text-kaspi-gray mt-2">
+                  Новый вопрос сразу попадёт в список и будет выбран по умолчанию
+                </p>
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -489,9 +816,24 @@ const HomePage: React.FC = () => {
               <h2 className="text-2xl font-display font-bold text-kaspi-dark mb-2">
                 Генерация ответов...
               </h2>
-              <p className="text-kaspi-gray">
+              <p className="text-kaspi-gray mb-4">
                 AI создает ответы в стиле Kaspi FAQ. Это может занять некоторое время.
               </p>
+              <div className="max-w-xl mx-auto text-left space-y-2">
+                <div className="flex items-center justify-between text-xs text-kaspi-gray">
+                  <span>Прогресс</span>
+                  <span>{Math.round(progressValue)}%</span>
+                </div>
+                <div className="w-full h-2 rounded-full bg-kaspi-sand">
+                  <div
+                    className="h-2 rounded-full bg-gradient-kaspi transition-all duration-300"
+                    style={{ width: `${Math.min(progressValue, 100)}%` }}
+                  />
+                </div>
+                <p className="text-xs text-kaspi-gray">
+                  {selectedCount} вопросов в очереди · автостоп через 60 секунд
+                </p>
+              </div>
             </motion.div>
           )}
 
@@ -545,18 +887,40 @@ const HomePage: React.FC = () => {
 
               <div className="space-y-4 mb-6 max-h-[28rem] overflow-y-auto pr-1">
                 {generatedFAQs.map((faq, index) => (
-                  <div key={index} className="rounded-xl border border-kaspi-sand bg-white/85 p-5 shadow-sm">
-                    <h3 className="font-display font-bold text-lg text-kaspi-dark mb-2">
+                  <div key={faq.id} className="rounded-xl border border-kaspi-sand bg-white/85 p-5 shadow-sm space-y-3">
+                    <h3 className="font-display font-bold text-lg text-kaspi-dark">
                       {index + 1}. {faq.question}
                     </h3>
                     <p className="text-kaspi-dark whitespace-pre-line leading-relaxed">
                       {faq.answer}
                     </p>
+                    <div className="space-y-2">
+                      <label className="text-xs text-kaspi-gray">Комментарий для исправления</label>
+                      <textarea
+                        value={reviewNotes[faq.id] || ''}
+                        onChange={(e) =>
+                          setReviewNotes((prev) => ({
+                            ...prev,
+                            [faq.id]: e.target.value,
+                          }))
+                        }
+                        placeholder="Напишите, что нужно поправить: добавить сроки, упростить формулировку, убрать лишнее..."
+                        className="w-full min-h-[90px] px-3 py-2 border border-kaspi-sand rounded-lg bg-white/90 text-sm focus:border-kaspi-red focus:outline-none"
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
 
-              <div className="flex items-center justify-center">
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <button
+                  onClick={handleApplyFixes}
+                  disabled={isGenerating}
+                  className="btn-secondary flex items-center gap-2"
+                >
+                  <Repeat className="w-5 h-5" />
+                  <span>Применить исправления</span>
+                </button>
                 <button
                   onClick={handleReset}
                   className="btn-ghost flex items-center gap-2"

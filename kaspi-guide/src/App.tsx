@@ -6,7 +6,7 @@ import FAQPage from './pages/FAQPage';
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <div className="flex flex-col min-h-screen bg-kaspi-light">
         <Header />
         <main className="flex-grow">
