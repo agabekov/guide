@@ -4,17 +4,31 @@ import { findSimilarFAQs } from './ragService';
 import { compressChecklist } from './checklistCompressor';
 import { getCacheKey, getCachedAnswers, setCachedAnswers } from './cacheService';
 
-const apiKey = import.meta.env.VITE_GROQ_API_KEY;
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const groqApiKey = import.meta.env.VITE_GROQ_API_KEY;
+const openrouterApiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
 
-// Доступные модели Groq (в порядке приоритета)
-// Модели выбраны для лучшей поддержки русского языка и качества генерации
-const MODEL_NAMES = [
-  'llama-3.3-70b-versatile',           // Лучшая модель, 128K context
-  'meta-llama/llama-4-scout-17b-16e-instruct',  // Новая LLaMA 4 Scout
-  'meta-llama/llama-4-maverick-17b-128e-instruct', // LLaMA 4 Maverick
-  'llama-3.1-8b-instant',              // Быстрая, хороша для русского
-  'moonshotai/kimi-k2-instruct',       // Kimi - отличная для многоязычности
+const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+
+// Конфигурация моделей с указанием провайдера
+interface ModelConfig {
+  name: string;
+  provider: 'groq' | 'openrouter';
+  displayName: string;
+}
+
+const MODEL_CONFIGS: ModelConfig[] = [
+  // Groq модели (быстрые и бесплатные)
+  { name: 'llama-3.3-70b-versatile', provider: 'groq', displayName: 'LLaMA 3.3 70B' },
+  { name: 'meta-llama/llama-4-scout-17b-16e-instruct', provider: 'groq', displayName: 'LLaMA 4 Scout' },
+  { name: 'meta-llama/llama-4-maverick-17b-128e-instruct', provider: 'groq', displayName: 'LLaMA 4 Maverick' },
+  { name: 'llama-3.1-8b-instant', provider: 'groq', displayName: 'LLaMA 3.1 8B' },
+  { name: 'moonshotai/kimi-k2-instruct', provider: 'groq', displayName: 'Kimi K2' },
+
+  // OpenRouter модели (fallback, если есть ключ)
+  { name: 'meta-llama/llama-3.3-70b-instruct', provider: 'openrouter', displayName: 'LLaMA 3.3 70B (OR)' },
+  { name: 'google/gemini-2.0-flash-exp:free', provider: 'openrouter', displayName: 'Gemini 2.0 Flash' },
+  { name: 'mistralai/mistral-7b-instruct:free', provider: 'openrouter', displayName: 'Mistral 7B' },
 ];
 
 const editorGuidelines = editorChecklistRaw
@@ -88,73 +102,72 @@ ${examples.map((ex, i) => `
 // Утилита для задержки
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Вспомогательная функция для вызова Groq API с автоматическим retry при rate limit
-const callGroqAPI = async (
+// Получить доступные модели (фильтруем по наличию API ключей)
+const getAvailableModels = (): ModelConfig[] => {
+  return MODEL_CONFIGS.filter(config => {
+    if (config.provider === 'groq') {
+      return groqApiKey && groqApiKey.trim() !== '';
+    } else if (config.provider === 'openrouter') {
+      return openrouterApiKey && openrouterApiKey.trim() !== '';
+    }
+    return false;
+  });
+};
+
+// Вспомогательная функция для вызова API (универсальная для Groq и OpenRouter)
+const callAPI = async (
   messages: Array<{ role: string; content: string }>,
-  modelName: string = MODEL_NAMES[0],
-  retryCount: number = 0
+  modelConfig: ModelConfig
 ): Promise<string> => {
+  const { name: modelName, provider } = modelConfig;
+
+  // Определяем URL и API ключ в зависимости от провайдера
+  const apiUrl = provider === 'groq' ? GROQ_API_URL : OPENROUTER_API_URL;
+  const apiKey = provider === 'groq' ? groqApiKey : openrouterApiKey;
+
   if (!apiKey) {
-    throw new Error('Не настроен ключ Groq. Добавьте VITE_GROQ_API_KEY в .env файл.');
+    throw new Error(`Не настроен ключ для ${provider}. Добавьте API ключ в .env файл.`);
   }
 
   // Validate API key format
   if (typeof apiKey !== 'string' || apiKey.trim() === '') {
-    throw new Error('API ключ не настроен правильно. Проверьте переменную окружения VITE_GROQ_API_KEY.');
+    throw new Error(`API ключ для ${provider} не настроен правильно.`);
   }
 
-  // Check for non-ASCII characters in API key
-  const hasNonAscii = /[^\x00-\x7F]/.test(apiKey);
-  if (hasNonAscii) {
-    throw new Error('API ключ содержит недопустимые символы. Используйте только ASCII символы.');
+  const headers: Record<string, string> = {
+    'Authorization': `Bearer ${apiKey}`,
+    'Content-Type': 'application/json',
+  };
+
+  // OpenRouter требует дополнительные заголовки
+  if (provider === 'openrouter') {
+    headers['HTTP-Referer'] = 'https://kaspi-guide.com'; // Ваш сайт
+    headers['X-Title'] = 'Kaspi Guide Generator';
   }
 
-  try {
-    const response = await fetch(GROQ_API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: modelName,
-        messages: messages,
-        temperature: 0.7,
-        max_tokens: 2048,
-      }),
-    });
+  const response = await fetch(apiUrl, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      model: modelName,
+      messages: messages,
+      temperature: 0.7,
+      max_tokens: 2048,
+    }),
+  });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const errorMessage = errorData.error?.message || response.statusText;
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    const errorMessage = errorData.error?.message || response.statusText;
 
-      // Если это rate limit error, пробуем подождать и повторить
-      if (response.status === 429 && retryCount < 3) {
-        // Извлекаем время ожидания из сообщения об ошибке
-        const waitTimeMatch = errorMessage.match(/try again in ([\d.]+)s/i);
-        const waitTime = waitTimeMatch ? Math.ceil(parseFloat(waitTimeMatch[1]) * 1000) : 20000; // По умолчанию 20 секунд
-
-        await sleep(waitTime);
-
-        // Рекурсивно вызываем с увеличенным счетчиком попыток
-        return callGroqAPI(messages, modelName, retryCount + 1);
-      }
-
-      throw new Error(
-        `Groq API Error: ${response.status} - ${errorMessage}`
-      );
-    }
-
-    const data = await response.json();
-    return data.choices[0]?.message?.content || '';
-  } catch (error: any) {
-    // Если это ошибка сети и у нас еще есть попытки
-    if (!error.message.includes('Groq API Error') && retryCount < 3) {
-      await sleep(5000);
-      return callGroqAPI(messages, modelName, retryCount + 1);
-    }
-    throw error;
+    // Пробрасываем ошибку наверх - там будет обработка переключения моделей
+    throw new Error(
+      `${provider} API Error: ${response.status} - ${errorMessage}`
+    );
   }
+
+  const data = await response.json();
+  return data.choices[0]?.message?.content || '';
 };
 
 // Генерация вопросов с автоматическим выбором модели + RAG оптимизация
@@ -164,8 +177,14 @@ export const generateQuestions = async (
 ): Promise<GeneratedQuestion[]> => {
   let lastError: any = null;
 
+  const availableModels = getAvailableModels();
+
+  if (availableModels.length === 0) {
+    throw new Error('Не настроен ни один API ключ. Добавьте VITE_GROQ_API_KEY или VITE_OPENROUTER_API_KEY в .env файл.');
+  }
+
   // Пробуем разные модели
-  for (const modelName of MODEL_NAMES) {
+  for (const modelConfig of availableModels) {
     try {
       // ✨ ОПТИМИЗАЦИЯ 1: RAG - используем семантический поиск вместо случайной выборки
       const relevantFAQs = await findSimilarFAQs(sourceText, 5); // Топ-5 вместо 12 случайных
@@ -208,19 +227,19 @@ ${sourceText}
 Верни список из 20-30 вопросов, каждый вопрос на новой строке, без нумерации.
 `;
 
-      const text = await callGroqAPI([
+      const text = await callAPI([
         {
           role: 'user',
           content: prompt,
         },
-      ], modelName);
+      ], modelConfig);
 
       // Парсим вопросы
       const questions = text
         .split('\n')
-        .map(q => q.trim())
-        .filter(q => q.length > 0 && q.endsWith('?'))
-        .map((q, i) => ({
+        .map((q: string) => q.trim())
+        .filter((q: string) => q.length > 0 && q.endsWith('?'))
+        .map((q: string, i: number) => ({
           id: `q-${Date.now()}-${i}`,
           question: q,
           selected: false,
@@ -258,17 +277,23 @@ export const generateAnswers = async (
     return cached;
   }
 
+  const allModels = getAvailableModels();
+
+  if (allModels.length === 0) {
+    throw new Error('Не настроен ни один API ключ. Добавьте VITE_GROQ_API_KEY или VITE_OPENROUTER_API_KEY в .env файл.');
+  }
+
   // 🔄 SMART MODEL ROTATION: Балансировка нагрузки между моделями
   let currentModelIndex = 0;
   const rateLimitedModels = new Set<string>();
   const modelUsageCount = new Map<string, number>();
 
   // Инициализируем счетчики
-  MODEL_NAMES.forEach(model => modelUsageCount.set(model, 0));
+  allModels.forEach(model => modelUsageCount.set(model.name, 0));
 
   // Функция для выбора следующей доступной модели (round-robin + избегаем rate-limited)
-  const getNextAvailableModel = (): string | null => {
-    const availableModels = MODEL_NAMES.filter(model => !rateLimitedModels.has(model));
+  const getNextAvailableModel = (): ModelConfig | null => {
+    const availableModels = allModels.filter(model => !rateLimitedModels.has(model.name));
 
     if (availableModels.length === 0) {
       return null; // Все модели исчерпали лимиты
@@ -356,13 +381,13 @@ ${batch.map((q, i) => `${i + 1}. ${q}`).join('\n')}
       let batchAnswers: GeneratedFAQ[] = [];
       let lastError: any = null;
       let attemptCount = 0;
-      const maxAttempts = MODEL_NAMES.length; // Пробуем все доступные модели
+      const maxAttempts = allModels.length; // Пробуем все доступные модели
 
       // 🔄 Пробуем модели по очереди (round-robin) пока не получим результат
       while (batchAnswers.length === 0 && attemptCount < maxAttempts) {
-        const modelName = getNextAvailableModel();
+        const modelConfig = getNextAvailableModel();
 
-        if (!modelName) {
+        if (!modelConfig) {
           // Все модели исчерпали лимиты - ждем и сбрасываем
           await sleep(30000);
 
@@ -373,12 +398,12 @@ ${batch.map((q, i) => `${i + 1}. ${q}`).join('\n')}
         }
 
         try {
-          const answer = await callGroqAPI([
+          const answer = await callAPI([
             {
               role: 'user',
               content: batchPrompt,
             },
-          ], modelName);
+          ], modelConfig);
 
           // Парсим JSON ответ
           const jsonMatch = answer.match(/\[[\s\S]*\]/);
@@ -389,7 +414,7 @@ ${batch.map((q, i) => `${i + 1}. ${q}`).join('\n')}
           batchAnswers = JSON.parse(jsonMatch[0]);
 
           // Увеличиваем счетчик использования модели
-          modelUsageCount.set(modelName, (modelUsageCount.get(modelName) || 0) + 1);
+          modelUsageCount.set(modelConfig.name, (modelUsageCount.get(modelConfig.name) || 0) + 1);
 
           break;
         } catch (error: any) {
@@ -398,7 +423,7 @@ ${batch.map((q, i) => `${i + 1}. ${q}`).join('\n')}
 
           // Если модель уперлась в rate limit, помечаем ее
           if (errorMessage.includes('429') || errorMessage.toLowerCase().includes('rate limit')) {
-            rateLimitedModels.add(modelName);
+            rateLimitedModels.add(modelConfig.name);
           }
         }
 
