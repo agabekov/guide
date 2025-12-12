@@ -3,7 +3,6 @@ import type { FAQItem } from '../types';
 import { findSimilarFAQs } from './ragService';
 import { compressChecklist } from './checklistCompressor';
 import { getCacheKey, getCachedAnswers, setCachedAnswers } from './cacheService';
-import { estimateTokens, createDetailedTokenStats, logDetailedTokenStats } from '../utils/tokenCounter';
 
 const apiKey = import.meta.env.VITE_GROQ_API_KEY;
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
@@ -23,11 +22,6 @@ const editorGuidelines = editorChecklistRaw
   .map((line) => line.trim())
   .filter((line) => line.length > 0)
   .join('\n');
-
-const editorGuidelinesPrompt = `
-Редакторский чек-лист контент-менеджера (учитывай все пункты при генерации):
-${editorGuidelines}
-`;
 
 export interface GeneratedQuestion {
   id: string;
@@ -140,7 +134,6 @@ const callGroqAPI = async (
         const waitTimeMatch = errorMessage.match(/try again in ([\d.]+)s/i);
         const waitTime = waitTimeMatch ? Math.ceil(parseFloat(waitTimeMatch[1]) * 1000) : 20000; // По умолчанию 20 секунд
 
-        console.log(`⏳ Rate limit достигнут. Ожидаем ${(waitTime / 1000).toFixed(1)}с перед повторной попыткой (${retryCount + 1}/3)...`);
         await sleep(waitTime);
 
         // Рекурсивно вызываем с увеличенным счетчиком попыток
@@ -157,7 +150,6 @@ const callGroqAPI = async (
   } catch (error: any) {
     // Если это ошибка сети и у нас еще есть попытки
     if (!error.message.includes('Groq API Error') && retryCount < 3) {
-      console.log(`⏳ Ошибка сети. Повторная попытка через 5с (${retryCount + 1}/3)...`);
       await sleep(5000);
       return callGroqAPI(messages, modelName, retryCount + 1);
     }
@@ -175,15 +167,11 @@ export const generateQuestions = async (
   // Пробуем разные модели
   for (const modelName of MODEL_NAMES) {
     try {
-      console.log(`\n🤖 Trying Groq model: ${modelName}`);
-
       // ✨ ОПТИМИЗАЦИЯ 1: RAG - используем семантический поиск вместо случайной выборки
-      console.log('🔍 Finding similar FAQs using RAG...');
       const relevantFAQs = await findSimilarFAQs(sourceText, 5); // Топ-5 вместо 12 случайных
       const styleAnalysis = analyzeFAQStyle(relevantFAQs);
 
       // ✨ ОПТИМИЗАЦИЯ 2: Сжимаем чеклист
-      console.log('🗜️  Compressing checklist...');
       const compressedChecklist = compressChecklist(sourceText, editorGuidelines);
       const compressedChecklistPrompt = `
 Редакторский чек-лист (релевантные секции):
@@ -220,19 +208,12 @@ ${sourceText}
 Верни список из 20-30 вопросов, каждый вопрос на новой строке, без нумерации.
 `;
 
-      // 📊 Подсчет токенов
-      const promptTokens = estimateTokens(prompt);
-      console.log(`📊 Prompt size: ${promptTokens} tokens (~${(prompt.length / 1024).toFixed(1)}KB)`);
-
-      console.log('Generating questions with Groq...');
       const text = await callGroqAPI([
         {
           role: 'user',
           content: prompt,
         },
       ], modelName);
-
-      console.log('Groq response received');
 
       // Парсим вопросы
       const questions = text
@@ -249,18 +230,14 @@ ${sourceText}
         throw new Error('AI не сгенерировал вопросы в правильном формате');
       }
 
-      console.log(`Success with Groq model: ${modelName}`);
-      console.log('Generated questions:', questions);
       return questions;
     } catch (error: any) {
-      console.error(`Groq model ${modelName} failed:`, error.message);
       lastError = error;
       continue; // Пробуем следующую модель
     }
   }
 
   // Если ни одна модель не сработала
-  console.error('All Groq models failed. Last error:', lastError);
   throw new Error(
     `Не удалось сгенерировать вопросы: ${lastError?.message || 'Попробуйте еще раз'}`
   );
@@ -270,21 +247,16 @@ ${sourceText}
 export const generateAnswers = async (
   questions: string[],
   sourceText: string,
-  faqData: any[],
+  _faqData: any[],
   onProgress?: (current: number, total: number) => void
 ): Promise<GeneratedFAQ[]> => {
-  console.log(`\n🚀 Starting answer generation for ${questions.length} questions...`);
-
   // ✨ ОПТИМИЗАЦИЯ 1: Проверяем кэш ПЕРЕД любой обработкой
   const cacheKey = getCacheKey(sourceText, questions);
   const cached = getCachedAnswers(cacheKey);
 
   if (cached) {
-    console.log('✅ Using cached answers - 100% token savings!');
     return cached;
   }
-
-  console.log('💾 Cache miss - generating new answers...');
 
   // 🔄 SMART MODEL ROTATION: Балансировка нагрузки между моделями
   let currentModelIndex = 0;
@@ -331,12 +303,9 @@ ${compressedChecklist}
       batches.push(questions.slice(i, i + BATCH_SIZE));
     }
 
-    console.log(`\n📦 Разбили на ${batches.length} батчей по ~${BATCH_SIZE} вопросов`);
-
     // Генерируем ответы для каждого батча
     for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
       const batch = batches[batchIndex];
-      console.log(`\n📝 Batch ${batchIndex + 1}/${batches.length}: генерируем ${batch.length} ответов...`);
 
       const batchPrompt = `
 Ты - контент-менеджер Kaspi.kz, который создает качественные ответы для FAQ.
@@ -394,8 +363,7 @@ ${batch.map((q, i) => `${i + 1}. ${q}`).join('\n')}
         const modelName = getNextAvailableModel();
 
         if (!modelName) {
-          // Все модели исчерпали лимиты
-          console.error('   ⚠️  Все модели достигли rate limit. Ждем 30 секунд...');
+          // Все модели исчерпали лимиты - ждем и сбрасываем
           await sleep(30000);
 
           // Сбрасываем rate limit для повторной попытки
@@ -405,7 +373,6 @@ ${batch.map((q, i) => `${i + 1}. ${q}`).join('\n')}
         }
 
         try {
-          console.log(`   🔄 Trying model [${attemptCount + 1}/${maxAttempts}]: ${modelName}`);
           const answer = await callGroqAPI([
             {
               role: 'user',
@@ -424,17 +391,14 @@ ${batch.map((q, i) => `${i + 1}. ${q}`).join('\n')}
           // Увеличиваем счетчик использования модели
           modelUsageCount.set(modelName, (modelUsageCount.get(modelName) || 0) + 1);
 
-          console.log(`   ✅ Batch generated with model: ${modelName} (usage: ${modelUsageCount.get(modelName)})`);
           break;
         } catch (error: any) {
           lastError = error;
           const errorMessage = error?.message || '';
-          console.error(`   ❌ Model ${modelName} failed:`, errorMessage);
 
           // Если модель уперлась в rate limit, помечаем ее
           if (errorMessage.includes('429') || errorMessage.toLowerCase().includes('rate limit')) {
             rateLimitedModels.add(modelName);
-            console.log(`   ⚠️  Model ${modelName} hit rate limit, switching to next model...`);
           }
         }
 
@@ -454,34 +418,17 @@ ${batch.map((q, i) => `${i + 1}. ${q}`).join('\n')}
         onProgress(results.length, questions.length);
       }
 
-      console.log(`   ✅ Progress: ${results.length}/${questions.length} ответов готово`);
-
       // Небольшая задержка между батчами для избежания rate limit
       if (batchIndex < batches.length - 1) {
-        console.log(`   ⏳ Пауза 2с перед следующим batch...`);
         await sleep(2000);
       }
     }
 
-    console.log('\n✅ All answers generated successfully');
-
-    // 📊 Статистика использования моделей
-    console.log('\n📊 Model usage statistics:');
-    modelUsageCount.forEach((count, model) => {
-      if (count > 0) {
-        const wasRateLimited = rateLimitedModels.has(model) ? ' ⚠️ (hit rate limit)' : '';
-        console.log(`   - ${model}: ${count} batches${wasRateLimited}`);
-      }
-    });
-
     // ✨ ОПТИМИЗАЦИЯ 5: Сохраняем результаты в кэш
-    console.log('💾 Caching results for future use...');
     setCachedAnswers(cacheKey, results);
 
     return results;
   } catch (error: any) {
-    console.error('Error generating answers:', error);
-    console.error('Error details:', error.message, error.stack);
     throw new Error(
       `Не удалось сгенерировать ответы: ${error.message || 'Попробуйте еще раз'}`
     );
