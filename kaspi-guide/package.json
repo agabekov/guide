@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run build:data && tsc -b && vite build",
+    "build": "npm run build:data && npm run build:style && tsc -b && vite build",
     "build:data": "tsx scripts/buildData.ts",
+    "build:style": "tsx scripts/generateStyleAnalysis.ts",
     "build:embeddings": "tsx scripts/generateEmbeddings.ts",
     "build:embeddings:local": "tsx scripts/generateEmbeddingsLocal.ts",
     "lint": "eslint .",

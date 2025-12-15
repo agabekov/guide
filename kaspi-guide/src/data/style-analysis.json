@@ -1,0 +1,288 @@
+{
+  "version": "v1.0",
+  "generatedAt": "2025-12-15T06:09:29.042Z",
+  "faqCount": 3981,
+  "analysis": {
+    "avgQuestionLength": 72,
+    "avgAnswerLength": 492,
+    "percentWithLists": 0,
+    "percentWithSteps": 25,
+    "percentShortAnswers": 24,
+    "commonQuestionStarts": [
+      "Я могу оплатить",
+      "Как я узнаю",
+      "Я получил справку",
+      "У меня есть",
+      "Я не могу",
+      "Как перевести деньги",
+      "Я могу перевести",
+      "Что такое",
+      "Мне не приходят",
+      "Как получить справку"
+    ],
+    "commonAnswerStarts": [
+      "Да",
+      "Нет",
+      "Заполните форму",
+      "В мобильном приложении",
+      "В",
+      "Причин может быть",
+      "В приложении",
+      "С",
+      "Вы можете посмотреть",
+      "Есть несколько способов"
+    ],
+    "keyPhrases": [
+      "приложении Kaspi.kz",
+      "сервисе «Мой Банк»",
+      "сервисе «Сообщения»",
+      "приложение Kaspi.kz",
+      "сервисе Мой Банк",
+      "сервисе «Платежи»",
+      "сервис «Сообщения»",
+      "перейдите в сервис",
+      "нажмите «Оформить возврат»",
+      "в разделе «Мой Банк»",
+      "Перейдите в сервис",
+      "сервис будет доступен и в других городах Казахстана",
+      "сервис «Мой Банк»",
+      "сервис Мой Банк",
+      "сервис Сообщения",
+      "перейдите в Настройки",
+      "сервис «Пополнения с",
+      "перейдите в Мой Банк",
+      "перейдите в сервис Гид",
+      "нажмите «Проверить»"
+    ],
+    "examplesByType": {
+      "short": [
+        {
+          "id": "L1VzZXJzL2Rhbml5",
+          "question": "Для чего нужен ПИН-код при оплате покупок с помощью Kaspi Alaqan?",
+          "answer": "ПИН-код — это дополнительная защита при оплате ладонью. Он требуется для покупок от 25 000 ₸, чтобы подтвердить оплату.",
+          "category": "Kaspi Alaqan",
+          "subcategory": "ПИН-код",
+          "created": "21.11.2025",
+          "updated": "21.11.2025",
+          "usefulness": 100,
+          "path": "/Users/daniyar/Documents/Kaspi Guide/Kaspi Alaqan/ПИН-код/Для чего нужен ПИН-код при оплате покупок с помощью Kaspi Alaqan_.md"
+        },
+        {
+          "id": "L1VzZXJzL2Rhbml5",
+          "question": "Как отключить ПИН-код Kaspi Alaqan?",
+          "answer": "Для этого в приложении Kaspi.kz перейдите в Настройки → Kaspi Alaqan. Нажмите на переключатель около поля \"ПИН-код для Kaspi Alaqan\" и подтвердите действие.",
+          "category": "Kaspi Alaqan",
+          "subcategory": "ПИН-код",
+          "created": "21.11.2025",
+          "updated": "21.11.2025",
+          "usefulness": 100,
+          "path": "/Users/daniyar/Documents/Kaspi Guide/Kaspi Alaqan/ПИН-код/Как отключить ПИН-код Kaspi Alaqan_.md"
+        },
+        {
+          "id": "L1VzZXJzL2Rhbml5",
+          "question": "Как сменить ПИН-код Kaspi Alaqan?",
+          "answer": "Для этого в приложении Kaspi.kz перейдите в Настройки → Kaspi Alaqan, нажмите «Сменить ПИН-код», введите новый и подтвердите действие.",
+          "category": "Kaspi Alaqan",
+          "subcategory": "ПИН-код",
+          "created": "21.11.2025",
+          "updated": "26.11.2025",
+          "usefulness": 90,
+          "path": "/Users/daniyar/Documents/Kaspi Guide/Kaspi Alaqan/ПИН-код/Как сменить ПИН-код Kaspi Alaqan_.md"
+        },
+        {
+          "id": "L1VzZXJzL2Rhbml5",
+          "question": "Я забыл ПИН-код Kaspi Alaqan. Что делать?",
+          "answer": "Вам нужно установить новый ПИН-код. Для этого в приложении Kaspi.kz перейдите в Настройки → Kaspi Alaqan, нажмите «Сменить ПИН-код», введите новый и подтвердите действие.",
+          "category": "Kaspi Alaqan",
+          "subcategory": "ПИН-код",
+          "created": "21.11.2025",
+          "updated": "21.11.2025",
+          "usefulness": 100,
+          "path": "/Users/daniyar/Documents/Kaspi Guide/Kaspi Alaqan/ПИН-код/Я забыл ПИН-код Kaspi Alaqan. Что делать_.md"
+        },
+        {
+          "id": "L1VzZXJzL2Rhbml5",
+          "question": "С какого минимального возраста можно подключить Kaspi Alaqan?",
+          "answer": "Вы можете подключить Kaspi Alaqan с 16 лет.",
+          "category": "Kaspi Alaqan",
+          "subcategory": "Подключение",
+          "created": "31.10.2025",
+          "updated": "31.10.2025",
+          "usefulness": 98,
+          "path": "/Users/daniyar/Documents/Kaspi Guide/Kaspi Alaqan/Подключение/С какого минимального возраста можно подключить Kaspi Alaqan_.md"
+        }
+      ],
+      "stepByStep": [
+        {
+          "id": "L1VzZXJzL2Rhbml5",
+          "question": "Как отключить ПИН-код Kaspi Alaqan?",
+          "answer": "Для этого в приложении Kaspi.kz перейдите в Настройки → Kaspi Alaqan. Нажмите на переключатель около поля \"ПИН-код для Kaspi Alaqan\" и подтвердите действие.",
+          "category": "Kaspi Alaqan",
+          "subcategory": "ПИН-код",
+          "created": "21.11.2025",
+          "updated": "21.11.2025",
+          "usefulness": 100,
+          "path": "/Users/daniyar/Documents/Kaspi Guide/Kaspi Alaqan/ПИН-код/Как отключить ПИН-код Kaspi Alaqan_.md"
+        },
+        {
+          "id": "L1VzZXJzL2Rhbml5",
+          "question": "Как сменить ПИН-код Kaspi Alaqan?",
+          "answer": "Для этого в приложении Kaspi.kz перейдите в Настройки → Kaspi Alaqan, нажмите «Сменить ПИН-код», введите новый и подтвердите действие.",
+          "category": "Kaspi Alaqan",
+          "subcategory": "ПИН-код",
+          "created": "21.11.2025",
+          "updated": "26.11.2025",
+          "usefulness": 90,
+          "path": "/Users/daniyar/Documents/Kaspi Guide/Kaspi Alaqan/ПИН-код/Как сменить ПИН-код Kaspi Alaqan_.md"
+        },
+        {
+          "id": "L1VzZXJzL2Rhbml5",
+          "question": "Я забыл ПИН-код Kaspi Alaqan. Что делать?",
+          "answer": "Вам нужно установить новый ПИН-код. Для этого в приложении Kaspi.kz перейдите в Настройки → Kaspi Alaqan, нажмите «Сменить ПИН-код», введите новый и подтвердите действие.",
+          "category": "Kaspi Alaqan",
+          "subcategory": "ПИН-код",
+          "created": "21.11.2025",
+          "updated": "21.11.2025",
+          "usefulness": 100,
+          "path": "/Users/daniyar/Documents/Kaspi Guide/Kaspi Alaqan/ПИН-код/Я забыл ПИН-код Kaspi Alaqan. Что делать_.md"
+        },
+        {
+          "id": "L1VzZXJzL2Rhbml5",
+          "question": "Как отключить Kaspi Alaqan?",
+          "answer": "В приложении Kaspi.kz<ссылка: ссылка_приложения/iOS: 'https://appsto.re/kz/zU2ohb.i'; android: 'https://play.google.com/store/apps/details?id=kz.kaspi.mobile'><ссылка: ссылка_приложения/iOS: 'https://appsto.re/kz/zU2ohb.i'; android: 'https://play.google.com/store/apps/details?id=kz.kaspi.mobile'> перейдите в Сервисы → Настройки → Kaspi Alaqan и нажмите «Отключить Kaspi Alaqan». Пройдите фотоверификацию, чтобы подтвердить свою личность. Вы не сможете оплачивать ладонью покупки у партнеров Kaspi, а также снимать деньги и пополнять счета в Kaspi Банкоматах. Вы можете в любой момент снова добавить ладонь в Kaspi Alaqan.",
+          "category": "Kaspi Alaqan",
+          "subcategory": "Подключение",
+          "created": "29.10.2025",
+          "updated": "21.11.2025",
+          "usefulness": 96,
+          "path": "/Users/daniyar/Documents/Kaspi Guide/Kaspi Alaqan/Подключение/Как отключить Kaspi Alaqan_.md"
+        },
+        {
+          "id": "L1VzZXJzL2Rhbml5",
+          "question": "Мне отказали в добавлении ладони в Kaspi Alaqan. Почему?",
+          "answer": "Причин может быть несколько: Вы уже добавили эту ладонь Теперь вы можете оплачивать покупки у партнеров Kaspi.kz, а также снимать деньги и пополнять счета в Kaspi Банкоматах. Если вы хотите делать это другой ладонью, переключите Kaspi Alagan на неё. Для этого следуйте инструкциям на экране смартфона. Рука слишком близко или далеко от камеры Следуйте инструкциям на экране Kaspi Alaqan. Ладонь очень холодная Попробуйте согреть ладонь и поднести ее к камере снова. Рука повреждена — есть глубокий ожог, шрам, или она перевязана Вы можете добавить другую. Ладонь сильно загрязнена Очистите ее и попробуйте еще раз. Версия приложения Kaspi.kz устарела Обновите его, чтобы добавить ладонь. Вы запретили приложению Kaspi.kz определять, где находитесь. Разрешите Kaspi.kz доступ к геопозиции. Android: перейдите в настройки устройства. В списке приложений выберите Kaspi.kz → Разрешения → Ещё → Все разрешения. iOS: откройте Настройки → Kaspi.kz → Геопозиция → При использовании приложения.",
+          "category": "Kaspi Alaqan",
+          "subcategory": "Подключение",
+          "created": "29.10.2025",
+          "updated": "02.11.2025",
+          "usefulness": 98,
+          "path": "/Users/daniyar/Documents/Kaspi Guide/Kaspi Alaqan/Подключение/Мне отказали в добавлении ладони в Kaspi Alaqan. Почему_.md"
+        }
+      ],
+      "withLists": [
+        {
+          "id": "L1VzZXJzL2Rhbml5",
+          "question": "Как подключить 3D Secure для Kaspi Gold?",
+          "answer": "3D Secure автоматически подключается к Kaspi Gold. Вам ничего не нужно делать для этого. 3D Secure Code придёт вам в сообщении, когда вы будете совершать покупку или перевод в интернете с Kaspi Gold. На некоторых сайтах 3D Secure автоматически проверяет операцию и подтверждает её без ввода кода. Если ресурс не поддерживает эту технологию, вводить 3D Secure Code не требуется, поэтому сообщение с ним не приходит.",
+          "category": "Kaspi Gold",
+          "subcategory": "3D Secure",
+          "created": "18.11.2021",
+          "updated": "18.11.2021",
+          "usefulness": 84,
+          "path": "/Users/daniyar/Documents/Kaspi Guide/Kaspi Gold/Безопасность/3D Secure/Как подключить 3D Secure для Kaspi Gold_.md"
+        },
+        {
+          "id": "L1VzZXJzL2Rhbml5",
+          "question": "Сколько времени действует 3D Secure Code для покупки в интернете с Kaspi Gold?",
+          "answer": "3D Secure Code действует 10 минут. В течение этого времени нужно его ввести, чтобы подтвердить покупку или перевод в интернете. Если время истекло, нужно будет совершить оплату заново.",
+          "category": "Kaspi Gold",
+          "subcategory": "3D Secure",
+          "created": "18.11.2021",
+          "updated": "18.11.2021",
+          "usefulness": 93,
+          "path": "/Users/daniyar/Documents/Kaspi Guide/Kaspi Gold/Безопасность/3D Secure/Сколько времени действует 3D Secure Code для покупки в интернете с Kaspi Gold_.md"
+        },
+        {
+          "id": "L1VzZXJzL2Rhbml5",
+          "question": "Сколько стоит подключение 3D Secure для Kaspi Gold?",
+          "answer": "3D Secure для владельцев Kaspi Gold подключается всегда бесплатно.",
+          "category": "Kaspi Gold",
+          "subcategory": "3D Secure",
+          "created": "18.11.2021",
+          "updated": "18.11.2021",
+          "usefulness": 92,
+          "path": "/Users/daniyar/Documents/Kaspi Guide/Kaspi Gold/Безопасность/3D Secure/Сколько стоит подключение 3D Secure для Kaspi Gold_.md"
+        },
+        {
+          "id": "L1VzZXJzL2Rhbml5",
+          "question": "Что такое 3D Secure?",
+          "answer": "3D Secure — это технология, которая обеспечивает дополнительную безопасность покупок и переводов в интернете с Kaspi Gold. Когда вы платите картой в интернете, вам приходит сообщение с одноразовым шестизначным кодом — это 3D Secure Code. Его нужно ввести для подтверждения, что операцию совершаете именно вы. Сообщение с кодом вы получите на свой номер, который указали при оформлении Kaspi Gold. На некоторых сайтах 3D Secure автоматически проверяет операцию и подтверждает её без ввода кода. Если ресурс не поддерживает эту технологию, вводить 3D Secure Code не требуется, поэтому сообщение с ним не приходит. 3D Secure для владельцев Kaspi Gold подключается всегда бесплатно.",
+          "category": "Kaspi Gold",
+          "subcategory": "3D Secure",
+          "created": "18.11.2021",
+          "updated": "18.11.2021",
+          "usefulness": 90,
+          "path": "/Users/daniyar/Documents/Kaspi Guide/Kaspi Gold/Безопасность/3D Secure/Что такое 3D Secure_.md"
+        },
+        {
+          "id": "L1VzZXJzL2Rhbml5",
+          "question": "Я перевыпустил Kaspi Gold. Как подключить карту к 3D Secure?",
+          "answer": "3D Secure автоматически подключается к Kaspi Gold. Вам ничего не нужно делать для этого.",
+          "category": "Kaspi Gold",
+          "subcategory": "3D Secure",
+          "created": "18.11.2021",
+          "updated": "18.11.2021",
+          "usefulness": 96,
+          "path": "/Users/daniyar/Documents/Kaspi Guide/Kaspi Gold/Безопасность/3D Secure/Я перевыпустил Kaspi Gold. Как подключить карту к 3D Secure_.md"
+        }
+      ],
+      "detailed": [
+        {
+          "id": "L1VzZXJzL2Rhbml5",
+          "question": "Как получить ПИН-код Kaspi Alaqan?",
+          "answer": "Вы устанавливаете ПИН-код во время подключения Kaspi Alaqan. Для безопасности избегайте дату вашего рождения, цифры по порядку или любые данные карты. Сотрудники Kaspi.kz никогда не просят назвать ПИН или код из SMS. Если вы подозреваете, что столкнулись с мошенниками, заполните форму сообщить о мошенничестве<кнопка: мошенники/https://form.kaspi.kz/form/FraudForm/?threadId=chatGuide&postscreen=true&product=45&productCode=alaqan&themeCode=pin&update=2025-11-21T21:44:07.312153&theme=909&title=Как получить ПИН-код Kaspi Alaqan?><кнопка: мошенники/https://form.kaspi.kz/form/FraudForm/?threadId=chatGuide&postscreen=true&product=45&productCode=alaqan&themeCode=pin&update=2025-11-21T21:44:07.312153&theme=909&title=Как получить ПИН-код Kaspi Alaqan?>. Мы обязательно примем меры.",
+          "category": "Kaspi Alaqan",
+          "subcategory": "ПИН-код",
+          "created": "21.11.2025",
+          "updated": "21.11.2025",
+          "usefulness": 100,
+          "path": "/Users/daniyar/Documents/Kaspi Guide/Kaspi Alaqan/ПИН-код/Как получить ПИН-код Kaspi Alaqan_.md"
+        },
+        {
+          "id": "L1VzZXJzL2Rhbml5",
+          "question": "Где можно добавить ладонь в Kaspi Alaqan?",
+          "answer": "Вы можете сделать это в отделении Kaspi.kz. Обратитесь к менеджеру - он поможет вам подключить сервис. В процессе вам нужно установить ПИН-код, а также подписать документы. Для этого пройдите фотоверификацию на своем смартфоне. После регистрации вы сможете оплачивать покупки ладонью, а также авторизоваться в любом Kaspi Банкомате без смартфона, карты или ввода ИИН, чтобы снять наличные или пополнить счета. Обратите внимание: установка Kaspi Alaqan в отделениях Алматы будет проходить постепенно. Следите за новостями на официальных страницах Kaspi.kz в соцсетях. <плейсхолдер: социальные_сети/[\"instagram\",\"facebook\",\"vkontakte\",\"x\",\"telegram\"]><плейсхолдер: социальные_сети/[\"instagram\",\"facebook\",\"vkontakte\",\"x\",\"telegram\"]>",
+          "category": "Kaspi Alaqan",
+          "subcategory": "Подключение",
+          "created": "03.11.2025",
+          "updated": "22.11.2025",
+          "usefulness": 97,
+          "path": "/Users/daniyar/Documents/Kaspi Guide/Kaspi Alaqan/Подключение/Где можно добавить ладонь в Kaspi Alaqan_.md"
+        },
+        {
+          "id": "L1VzZXJzL2Rhbml5",
+          "question": "Другой человек может добавить свою ладонь в мой Kaspi Alaqan?",
+          "answer": "Нет. Добавить свою ладонь к Kaspi Alaqan можете только вы сами. В целях безопасности, во время регистрации вы проходите фотоверификацию, и процесс фиксируется на видео. Это необходимо, чтобы подтвердить личность. Обратите внимание: установка Kaspi Alaqan в отделениях Алматы будет проходить постепенно. Следите за новостями на официальных страницах Kaspi.kz в соцсетях. <плейсхолдер: социальные_сети/[\"instagram\",\"facebook\",\"vkontakte\",\"x\",\"telegram\"]><плейсхолдер: социальные_сети/[\"instagram\",\"facebook\",\"vkontakte\",\"x\",\"telegram\"]>",
+          "category": "Kaspi Alaqan",
+          "subcategory": "Подключение",
+          "created": "31.10.2025",
+          "updated": "07.11.2025",
+          "usefulness": 100,
+          "path": "/Users/daniyar/Documents/Kaspi Guide/Kaspi Alaqan/Подключение/Другой человек может добавить свою ладонь в мой Kaspi Alaqan_.md"
+        },
+        {
+          "id": "L1VzZXJzL2Rhbml5",
+          "question": "Как начать пользоваться Kaspi Alaqan?",
+          "answer": "Вы можете сделать это в отделении Kaspi.kz. Обратитесь к менеджеру - он поможет вам подключить сервис. В процессе вам нужно установить ПИН-код, а также подписать документы. Для этого пройдите фотоверификацию на своем смартфоне. После регистрации вы сможете оплачивать покупки ладонью, а также авторизоваться в любом Kaspi Банкомате без смартфона, карты или ввода ИИН, чтобы снять наличные или пополнить счета. Обратите внимание: установка Kaspi Alaqan в отделениях Алматы будет проходить постепенно. Следите за новостями на официальных страницах Kaspi.kz в соцсетях. <плейсхолдер: социальные_сети/[\"instagram\",\"facebook\",\"vkontakte\",\"x\",\"telegram\"]><плейсхолдер: социальные_сети/[\"instagram\",\"facebook\",\"vkontakte\",\"x\",\"telegram\"]>",
+          "category": "Kaspi Alaqan",
+          "subcategory": "Подключение",
+          "created": "29.10.2025",
+          "updated": "22.11.2025",
+          "usefulness": 100,
+          "path": "/Users/daniyar/Documents/Kaspi Guide/Kaspi Alaqan/Подключение/Как начать пользоваться Kaspi Alaqan_.md"
+        },
+        {
+          "id": "L1VzZXJzL2Rhbml5",
+          "question": "Как отключить Kaspi Alaqan?",
+          "answer": "В приложении Kaspi.kz<ссылка: ссылка_приложения/iOS: 'https://appsto.re/kz/zU2ohb.i'; android: 'https://play.google.com/store/apps/details?id=kz.kaspi.mobile'><ссылка: ссылка_приложения/iOS: 'https://appsto.re/kz/zU2ohb.i'; android: 'https://play.google.com/store/apps/details?id=kz.kaspi.mobile'> перейдите в Сервисы → Настройки → Kaspi Alaqan и нажмите «Отключить Kaspi Alaqan». Пройдите фотоверификацию, чтобы подтвердить свою личность. Вы не сможете оплачивать ладонью покупки у партнеров Kaspi, а также снимать деньги и пополнять счета в Kaspi Банкоматах. Вы можете в любой момент снова добавить ладонь в Kaspi Alaqan.",
+          "category": "Kaspi Alaqan",
+          "subcategory": "Подключение",
+          "created": "29.10.2025",
+          "updated": "21.11.2025",
+          "usefulness": 96,
+          "path": "/Users/daniyar/Documents/Kaspi Guide/Kaspi Alaqan/Подключение/Как отключить Kaspi Alaqan_.md"
+        }
+      ]
+    }
+  }
+}
