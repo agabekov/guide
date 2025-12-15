@@ -39,9 +39,6 @@ export const Step2Questions: React.FC<Step2QuestionsProps> = ({
   return (
     <div className="card active">
       <div className="card-title">Шаг 2. Выберите и отредактируйте вопросы</div>
-      <div className="card-subtitle">
-        AI сгенерировал <span>{questions.length}</span> вопросов на основе загруженной информации
-      </div>
 
       <div>
         {questions.map((question, index) => (

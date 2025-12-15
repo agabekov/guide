@@ -23,7 +23,6 @@ export const Step1Input: React.FC<Step1InputProps> = ({
   return (
     <div className="card active">
       <div className="card-title">Шаг 1. Загрузите информацию о продукте</div>
-      <div className="card-subtitle">Вставьте текст, загрузите файлы или изображения</div>
 
       <textarea
         value={sourceText}

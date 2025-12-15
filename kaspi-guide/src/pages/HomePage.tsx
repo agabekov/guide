@@ -287,7 +287,6 @@ const HomePage: React.FC = () => {
     <>
       <div className="header">
         <h1>Генератор вопросов и ответов</h1>
-        <p>Автоматическая подготовка FAQ для Kaspi Гид с помощью AI</p>
 
         {/* Mode Toggle */}
         <div className="mode-toggle-container">

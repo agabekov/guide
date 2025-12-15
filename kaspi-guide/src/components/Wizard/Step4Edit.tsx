@@ -21,7 +21,6 @@ export const Step4Edit: React.FC<Step4EditProps> = ({
   return (
     <div className="card active">
       <div className="card-title">Шаг 4. Внесите исправления</div>
-      <div className="card-subtitle">Укажите в комментариях, что нужно изменить в ответах</div>
 
       <div>
         {qaData.map((qa) => (

@@ -15,9 +15,6 @@ export const Step3Answers: React.FC<Step3AnswersProps> = ({
   return (
     <div className="card active">
       <div className="card-title">Шаг 3. Проверьте результат</div>
-      <div className="card-subtitle">
-        AI создал ответы с учётом чек-листа контент-менеджера и стиля Kaspi Гид
-      </div>
 
       <div>
         {qaData.map((qa) => (
