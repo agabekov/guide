@@ -17,8 +17,8 @@ export const Step3Answers: React.FC<Step3AnswersProps> = ({
       <div className="card-title">Шаг 3. Проверьте результат</div>
 
       <div>
-        {qaData.map((qa) => (
-          <QAPairComponent key={qa.id} qa={qa} />
+        {qaData.map((qa, index) => (
+          <QAPairComponent key={qa.id} qa={qa} questionNumber={index + 1} />
         ))}
       </div>
 
