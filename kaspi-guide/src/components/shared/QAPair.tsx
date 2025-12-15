@@ -2,6 +2,7 @@ import type { QAPair as QAPairType } from '../../types';
 
 interface QAPairProps {
   qa: QAPairType;
+  questionNumber?: number;
   showEditSection?: boolean;
   editComment?: string;
   onEditCommentChange?: (comment: string) => void;
@@ -9,13 +10,19 @@ interface QAPairProps {
 
 export const QAPair: React.FC<QAPairProps> = ({
   qa,
+  questionNumber,
   showEditSection = false,
   editComment = '',
   onEditCommentChange,
 }) => {
   return (
     <div className="qa-pair">
-      <div className="qa-question">{qa.question}</div>
+      <div className="qa-question">
+        {questionNumber !== undefined && (
+          <span className="question-number">{questionNumber}. </span>
+        )}
+        {qa.question}
+      </div>
       <div className="qa-answer">{qa.answer}</div>
 
       {showEditSection && onEditCommentChange && (
