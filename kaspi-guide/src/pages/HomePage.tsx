@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Step1Input,
   Step2Questions,
@@ -19,6 +19,11 @@ const faqData = faqDataRaw as any[];
 const HomePage: React.FC = () => {
   // Mode selection
   const [mode, setMode] = useState<'client' | 'business'>('client');
+
+  // Apply mode class to body
+  useEffect(() => {
+    document.body.className = `mode-${mode}`;
+  }, [mode]);
 
   // Step navigation
   const [currentStep, setCurrentStep] = useState<WizardStep>('step1');
