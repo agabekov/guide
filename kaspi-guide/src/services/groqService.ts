@@ -3,6 +3,8 @@ import type { FAQItem } from '../types';
 import { findSimilarFAQs } from './ragService';
 import { compressChecklist } from './checklistCompressor';
 import { getCacheKey, getCachedAnswers, setCachedAnswers } from './cacheService';
+import { getGlobalStyleAnalysis, formatStyleGuide } from './styleAnalysisService';
+import allFAQsData from '../data/faq.json';
 
 const groqApiKey = import.meta.env.VITE_GROQ_API_KEY;
 const openrouterApiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
@@ -48,54 +50,31 @@ export interface GeneratedFAQ {
   answer: string;
 }
 
-// Анализ стиля существующих FAQ
+// Оптимизированное представление FAQ примеров для экономии токенов
 const trimText = (text: string, maxLength: number): string => {
   const normalized = (text || '').replace(/\s+/g, ' ').trim();
   if (normalized.length <= maxLength) return normalized;
   return `${normalized.slice(0, maxLength)}...`;
 };
 
-const pickStyleExamples = (faqData: FAQItem[], sampleSize: number): FAQItem[] => {
-  if (faqData.length <= sampleSize) return faqData;
+/**
+ * Форматирует RAG примеры в сжатом виде для промпта
+ * Использует адаптивное сжатие в зависимости от количества примеров
+ */
+const formatRAGExamples = (ragFAQs: FAQItem[]): string => {
+  if (!ragFAQs || ragFAQs.length === 0) return '';
 
-  const byUsefulness = [...faqData].sort(
-    (a, b) => (b.usefulness || 0) - (a.usefulness || 0)
-  );
-  const top = byUsefulness.slice(0, Math.ceil(sampleSize / 2));
+  // Чем больше примеров, тем короче каждый
+  const maxAnswerLength = Math.max(400, Math.floor(4000 / ragFAQs.length));
 
-  const randomPool = [...faqData]
-    .sort(() => 0.5 - Math.random())
-    .slice(0, sampleSize);
-
-  const combined = [...top, ...randomPool];
-  const uniqueByQuestion = new Map<string, FAQItem>();
-
-  combined.forEach((faq) => {
-    if (!uniqueByQuestion.has(faq.question)) {
-      uniqueByQuestion.set(faq.question, faq);
-    }
-  });
-
-  return Array.from(uniqueByQuestion.values()).slice(0, sampleSize);
-};
-
-const analyzeFAQStyle = (faqData: FAQItem[]): string => {
-  if (!faqData || faqData.length === 0) return '';
-
-  // Берем примеры из базы по полезности и случайной выборке, чтобы отражать стиль всех MD
-  const examples = pickStyleExamples(faqData, 12).map(faq => ({
-    question: trimText(faq.question, 180),
-    answer: trimText(faq.answer, 700),
-  }));
+  const examples = ragFAQs.map((faq, i) => `
+${i + 1}. Вопрос: ${trimText(faq.question, 150)}
+   Ответ: ${trimText(faq.answer, maxAnswerLength)}
+   Категория: ${faq.category}`).join('\n');
 
   return `
-Примеры существующих FAQ для анализа стиля:
-
-${examples.map((ex, i) => `
-Пример ${i + 1}:
-Вопрос: ${ex.question}
-Ответ: ${ex.answer}
-`).join('\n')}
+РЕЛЕВАНТНЫЕ ПРИМЕРЫ ИЗ БАЗЫ (семантически похожие на ваш текст):
+${examples}
 `;
 };
 
@@ -170,7 +149,7 @@ const callAPI = async (
   return data.choices[0]?.message?.content || '';
 };
 
-// Генерация вопросов с автоматическим выбором модели + RAG оптимизация
+// Генерация вопросов с автоматическим выбором модели + ПРОДВИНУТАЯ RAG оптимизация
 export const generateQuestions = async (
   sourceText: string,
   _faqData: any[]
@@ -186,11 +165,18 @@ export const generateQuestions = async (
   // Пробуем разные модели
   for (const modelConfig of availableModels) {
     try {
-      // ✨ ОПТИМИЗАЦИЯ 1: RAG - используем семантический поиск вместо случайной выборки
-      const relevantFAQs = await findSimilarFAQs(sourceText, 5); // Топ-5 вместо 12 случайных
-      const styleAnalysis = analyzeFAQStyle(relevantFAQs);
+      // ✨ НОВАЯ СИСТЕМА: Двухуровневый RAG
 
-      // ✨ ОПТИМИЗАЦИЯ 2: Сжимаем чеклист
+      // 1. Глобальный анализ стиля (анализ ВСЕХ 3985 FAQ) - кэшируется!
+      const allFAQs = allFAQsData as FAQItem[];
+      const globalStyle = await getGlobalStyleAnalysis(allFAQs);
+      const styleGuide = formatStyleGuide(globalStyle);
+
+      // 2. RAG - семантический поиск релевантных примеров (увеличено с 5 до 15)
+      const relevantFAQs = await findSimilarFAQs(sourceText, 15);
+      const ragExamples = formatRAGExamples(relevantFAQs);
+
+      // 3. Сжатие чеклиста
       const compressedChecklist = compressChecklist(sourceText, editorGuidelines);
       const compressedChecklistPrompt = `
 Редакторский чек-лист (релевантные секции):
@@ -200,7 +186,10 @@ ${compressedChecklist}
       const prompt = `
 Ты - реальный клиент Kaspi.kz, который впервые узнал о продукте или услуге.
 
-${styleAnalysis}
+${styleGuide}
+
+${ragExamples}
+
 ${compressedChecklistPrompt}
 
 Представь, что ты обычный пользователь, который только что прочитал следующую информацию и хочет разобраться в деталях перед использованием продукта:
@@ -212,8 +201,11 @@ ${sourceText}
 Подумай о своих сомнениях, опасениях и практических вопросах. Какие вопросы у тебя возникают как у клиента?
 
 ТРЕБОВАНИЯ К ВОПРОСАМ:
-1. Соблюдай редакторский чек-лист (см. выше)
-2. Вопросы должны быть написаны в том же стиле, тоне и формате, как уже существующие вопросы из примеров выше
+1. Строго соблюдай редакторский чек-лист (см. выше)
+2. Вопросы должны быть написаны ТОЧНО в том же стиле, что показан в анализе выше:
+   - Используй типичные начала вопросов из анализа
+   - Соблюдай среднюю длину вопроса (${globalStyle.avgQuestionLength} символов)
+   - Следуй структурным паттернам из примеров
 3. Думай как реальный пользователь с разными потребностями:
    - Практическое использование: "Как...", "Где...", "Когда..."
    - Условия и ограничения: "Нужна ли...", "Можно ли...", "Доступно ли..."
@@ -221,7 +213,7 @@ ${sourceText}
 4. Охватывай все аспекты равномерно: практику, условия, возможные проблемы
 5. Вопросы должны помогать клиенту принять решение об использовании продукта
 6. Все вопросы должны быть на русском языке
-7. Используй формально-вежливый тон
+7. Используй формально-вежливый тон как в примерах
 
 ФОРМАТ ОТВЕТА:
 Верни список из 20-30 вопросов, каждый вопрос на новой строке, без нумерации.
@@ -307,11 +299,18 @@ export const generateAnswers = async (
   };
 
   try {
-    // ✨ ОПТИМИЗАЦИЯ 2: RAG - выполняем поиск ОДИН РАЗ для всех вопросов
-    const relevantFAQs = await findSimilarFAQs(sourceText, 5);
-    const styleAnalysis = analyzeFAQStyle(relevantFAQs);
+    // ✨ НОВАЯ СИСТЕМА: Двухуровневый RAG
 
-    // ✨ ОПТИМИЗАЦИЯ 3: Сжимаем чеклист ОДИН РАЗ
+    // 1. Глобальный анализ стиля (анализ ВСЕХ 3985 FAQ) - кэшируется!
+    const allFAQs = allFAQsData as FAQItem[];
+    const globalStyle = await getGlobalStyleAnalysis(allFAQs);
+    const styleGuide = formatStyleGuide(globalStyle);
+
+    // 2. RAG - выполняем поиск ОДИН РАЗ для всех вопросов (увеличено с 5 до 15)
+    const relevantFAQs = await findSimilarFAQs(sourceText, 15);
+    const ragExamples = formatRAGExamples(relevantFAQs);
+
+    // 3. Сжимаем чеклист ОДИН РАЗ
     const compressedChecklist = compressChecklist(sourceText, editorGuidelines);
     const compressedChecklistPrompt = `
 Редакторский чек-лист (релевантные секции):
@@ -335,7 +334,10 @@ ${compressedChecklist}
       const batchPrompt = `
 Ты - контент-менеджер Kaspi.kz, который создает качественные ответы для FAQ.
 
-${styleAnalysis}
+${styleGuide}
+
+${ragExamples}
+
 ${compressedChecklistPrompt}
 
 Твоя задача - написать ответы на вопросы клиентов, используя информацию из исходного текста.
@@ -348,14 +350,19 @@ ${batch.map((q, i) => `${i + 1}. ${q}`).join('\n')}
 
 ТРЕБОВАНИЯ К ОТВЕТАМ:
 1. Строго соблюдай редакторский чек-лист (см. выше) - это ключевой документ для качества
-2. Ответы должны быть написаны в том же стиле, тоне и формате, как уже существующие ответы из примеров выше
+2. Ответы должны быть написаны ТОЧНО в том же стиле, что показан в анализе выше:
+   - Используй типичные начала ответов из анализа
+   - Соблюдай среднюю длину ответа (${globalStyle.avgAnswerLength} символов)
+   - Используй списки в ${globalStyle.percentWithLists}% случаев, как в существующих ответах
+   - Используй пошаговые инструкции в ${globalStyle.percentWithSteps}% случаев
+   - Следуй ключевым фразам и терминам из анализа
 3. Пиши хорошим русским языком:
    - Избегай повторов слов и фраз
    - Используй разнообразную лексику
    - Пиши естественно и понятно
    - Формально-вежливый тон, как в примерах
-4. Структура ответа (выбери подходящую):
-   - Краткий ответ (2-3 абзаца) для простых вопросов
+4. Структура ответа (выбери подходящую по типу вопроса):
+   - Краткий ответ (< 200 символов) для простых вопросов
    - Пошаговая инструкция для процессов
    - Списки для перечислений условий или требований
 5. Конкретика и польза:
