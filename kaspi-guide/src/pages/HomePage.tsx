@@ -17,6 +17,9 @@ import faqDataRaw from '../data/faq.json';
 const faqData = faqDataRaw as any[];
 
 const HomePage: React.FC = () => {
+  // Mode selection
+  const [mode, setMode] = useState<'client' | 'business'>('client');
+
   // Step navigation
   const [currentStep, setCurrentStep] = useState<WizardStep>('step1');
 
@@ -276,6 +279,22 @@ const HomePage: React.FC = () => {
       <div className="header">
         <h1>Генератор вопросов и ответов</h1>
         <p>Автоматическая подготовка FAQ для Kaspi Гид с помощью AI</p>
+
+        {/* Mode Toggle */}
+        <div className="mode-toggle-container">
+          <button
+            className={`mode-toggle-btn ${mode === 'client' ? 'active' : ''}`}
+            onClick={() => setMode('client')}
+          >
+            Клиентам
+          </button>
+          <button
+            className={`mode-toggle-btn ${mode === 'business' ? 'active' : ''}`}
+            onClick={() => setMode('business')}
+          >
+            Бизнесу
+          </button>
+        </div>
       </div>
 
       {/* Step 1: Input */}
