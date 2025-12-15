@@ -1,4 +1,5 @@
 import type { FAQItem } from '../types';
+import precomputedStyleData from '../data/style-analysis.json';
 
 /**
  * Результат анализа стиля FAQ
@@ -303,35 +304,30 @@ const loadFromLocalStorage = (): StyleAnalysis | null => {
 };
 
 /**
- * Получает или создает глобальный анализ стиля (с многоуровневым кэшированием)
+ * Получает предвычисленный анализ стиля (мгновенно для всех пользователей!)
+ *
+ * Анализ выполняется один раз при сборке проекта (npm run build:style)
+ * и включается в бандл приложения. Все пользователи получают мгновенную загрузку!
  */
-export const getGlobalStyleAnalysis = async (allFAQs: FAQItem[]): Promise<StyleAnalysis> => {
-  // Уровень 1: Кэш в памяти (самый быстрый)
+export const getGlobalStyleAnalysis = async (_allFAQs?: FAQItem[]): Promise<StyleAnalysis> => {
+  // Кэш в памяти для быстрого доступа в рамках сессии
   if (cachedStyleAnalysis) {
     console.log('✅ Using in-memory cached style analysis');
     return cachedStyleAnalysis;
   }
 
-  // Уровень 2: localStorage (быстрый)
-  const fromStorage = loadFromLocalStorage();
-  if (fromStorage) {
-    cachedStyleAnalysis = fromStorage;
-    console.log('✅ Using localStorage cached style analysis');
-    return fromStorage;
+  // Загружаем предвычисленный анализ из бандла (мгновенно!)
+  console.log('⚡ Loading pre-computed style analysis from bundle...');
+
+  const precomputed = precomputedStyleData as any;
+
+  // Проверяем версию
+  if (precomputed.version !== CACHE_VERSION) {
+    console.warn('⚠️  Precomputed style version mismatch. Please run: npm run build:style');
   }
 
-  // Уровень 3: Создаем новый анализ (медленно, ~2-3 секунды)
-  console.log('🔄 Creating global style analysis (first time or cache expired)...');
-  console.log(`   Analyzing ${allFAQs.length} FAQs...`);
-
-  const startTime = performance.now();
-  cachedStyleAnalysis = analyzeGlobalStyle(allFAQs);
-  const duration = ((performance.now() - startTime) / 1000).toFixed(2);
-
-  console.log(`✅ Analysis complete in ${duration}s`);
-
-  // Сохраняем в localStorage для следующих сессий
-  saveToLocalStorage(cachedStyleAnalysis);
+  cachedStyleAnalysis = precomputed.analysis as StyleAnalysis;
+  console.log(`✅ Loaded style analysis (${precomputed.faqCount} FAQs, generated ${new Date(precomputed.generatedAt).toLocaleString()})`);
 
   return cachedStyleAnalysis;
 };
