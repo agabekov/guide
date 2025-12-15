@@ -238,28 +238,114 @@ export const formatStyleGuide = (styleAnalysis: StyleAnalysis): string => {
 };
 
 /**
- * Кэш для глобального анализа стиля
+ * Версия кэша - увеличивайте при изменении логики анализа или обновлении FAQ базы
+ */
+const CACHE_VERSION = 'v1.0';
+const CACHE_KEY = 'kaspi-guide-style-analysis';
+
+/**
+ * Кэш в памяти для быстрого доступа в рамках сессии
  */
 let cachedStyleAnalysis: StyleAnalysis | null = null;
 
 /**
- * Получает или создает глобальный анализ стиля (с кэшированием)
+ * Сохраняет анализ стиля в localStorage
+ */
+const saveToLocalStorage = (analysis: StyleAnalysis): void => {
+  try {
+    const cacheData = {
+      version: CACHE_VERSION,
+      timestamp: Date.now(),
+      analysis: analysis,
+    };
+    localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+    console.log('💾 Style analysis saved to localStorage');
+  } catch (error) {
+    console.warn('⚠️  Failed to save to localStorage:', error);
+    // Не критично, продолжаем работу
+  }
+};
+
+/**
+ * Загружает анализ стиля из localStorage
+ */
+const loadFromLocalStorage = (): StyleAnalysis | null => {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (!cached) {
+      return null;
+    }
+
+    const cacheData = JSON.parse(cached);
+
+    // Проверяем версию кэша
+    if (cacheData.version !== CACHE_VERSION) {
+      console.log('⚠️  Cache version mismatch, will recreate');
+      localStorage.removeItem(CACHE_KEY);
+      return null;
+    }
+
+    // Проверяем возраст кэша (макс. 7 дней)
+    const age = Date.now() - cacheData.timestamp;
+    const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 дней
+    if (age > maxAge) {
+      console.log('⚠️  Cache expired (> 7 days), will recreate');
+      localStorage.removeItem(CACHE_KEY);
+      return null;
+    }
+
+    console.log('💾 Loaded style analysis from localStorage');
+    return cacheData.analysis as StyleAnalysis;
+  } catch (error) {
+    console.warn('⚠️  Failed to load from localStorage:', error);
+    return null;
+  }
+};
+
+/**
+ * Получает или создает глобальный анализ стиля (с многоуровневым кэшированием)
  */
 export const getGlobalStyleAnalysis = async (allFAQs: FAQItem[]): Promise<StyleAnalysis> => {
+  // Уровень 1: Кэш в памяти (самый быстрый)
   if (cachedStyleAnalysis) {
-    console.log('✅ Using cached global style analysis');
+    console.log('✅ Using in-memory cached style analysis');
     return cachedStyleAnalysis;
   }
 
-  console.log('🔄 Creating global style analysis...');
+  // Уровень 2: localStorage (быстрый)
+  const fromStorage = loadFromLocalStorage();
+  if (fromStorage) {
+    cachedStyleAnalysis = fromStorage;
+    console.log('✅ Using localStorage cached style analysis');
+    return fromStorage;
+  }
+
+  // Уровень 3: Создаем новый анализ (медленно, ~2-3 секунды)
+  console.log('🔄 Creating global style analysis (first time or cache expired)...');
+  console.log(`   Analyzing ${allFAQs.length} FAQs...`);
+
+  const startTime = performance.now();
   cachedStyleAnalysis = analyzeGlobalStyle(allFAQs);
+  const duration = ((performance.now() - startTime) / 1000).toFixed(2);
+
+  console.log(`✅ Analysis complete in ${duration}s`);
+
+  // Сохраняем в localStorage для следующих сессий
+  saveToLocalStorage(cachedStyleAnalysis);
+
   return cachedStyleAnalysis;
 };
 
 /**
- * Очищает кэш (для тестирования)
+ * Очищает весь кэш (память + localStorage)
+ * Используйте при обновлении FAQ базы
  */
 export const clearStyleCache = (): void => {
   cachedStyleAnalysis = null;
-  console.log('🗑️  Style analysis cache cleared');
+  try {
+    localStorage.removeItem(CACHE_KEY);
+    console.log('🗑️  Style analysis cache cleared (memory + localStorage)');
+  } catch (error) {
+    console.warn('⚠️  Failed to clear localStorage:', error);
+  }
 };
