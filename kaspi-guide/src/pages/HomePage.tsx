@@ -172,10 +172,11 @@ const HomePage: React.FC = () => {
 
       setProgressValue(100);
 
-      const newQAData: QAPair[] = generated.map((faq, i) => ({
+      // Используем оригинальные тексты вопросов, а не те, что вернул AI
+      const newQAData: QAPair[] = selectedQuestions.map((questionText, i) => ({
         id: `qa-${i}`,
-        question: faq.question,
-        answer: faq.answer,
+        question: questionText,
+        answer: generated[i]?.answer || 'Ошибка генерации ответа',
       }));
 
       setQaData(newQAData);
@@ -205,7 +206,7 @@ const HomePage: React.FC = () => {
     setProgressTotal(commentsToApply.length);
 
     try {
-      // Get questions that need editing
+      // Get questions that need editing with their original text
       const questionsToEdit = commentsToApply.map(([qaId, comment]) => {
         const qa = qaData.find((q) => q.id === qaId);
         return `${qa?.question}\n[Комментарий редактора: ${comment}]`;
@@ -225,12 +226,15 @@ const HomePage: React.FC = () => {
 
       setProgressValue(100);
 
-      // Update only edited Q&A pairs
+      // Update only edited Q&A pairs, preserving original question text
       setQaData((prev) =>
         prev.map((qa) => {
           const commentIndex = commentsToApply.findIndex(([id]) => id === qa.id);
           if (commentIndex !== -1) {
-            return { ...qa, answer: regenerated[commentIndex].answer };
+            return {
+              ...qa,
+              answer: regenerated[commentIndex]?.answer || qa.answer
+            };
           }
           return qa;
         })
