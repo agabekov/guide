@@ -101,7 +101,7 @@ const HomePage: React.FC = () => {
       const newQuestions: Question[] = generated.map((q) => ({
         id: q.id,
         text: q.question,
-        selected: true,
+        selected: false,
         edited: false,
         custom: false,
       }));
@@ -135,7 +135,7 @@ const HomePage: React.FC = () => {
     const newQuestion: Question = {
       id: `custom-${Date.now()}`,
       text: text,
-      selected: true,
+      selected: false,
       edited: false,
       custom: true,
     };
