@@ -20,9 +20,6 @@ export const Step1Input: React.FC<Step1InputProps> = ({
   onGenerateQuestions,
   canGenerate,
 }) => {
-  const showPreview = sourceText.trim().length > 0;
-  const preview = sourceText.length > 500 ? sourceText.substring(0, 500) + '...' : sourceText;
-
   return (
     <div className="card active">
       <div className="card-title">Шаг 1. Загрузите информацию о продукте</div>
@@ -38,13 +35,6 @@ export const Step1Input: React.FC<Step1InputProps> = ({
       <FileUploadArea onFilesSelect={onFilesSelect} />
 
       <FileList files={files} onRemove={onFileRemove} />
-
-      {showPreview && (
-        <div className="content-preview">
-          <div className="content-preview-title">📄 Превью загруженного контента:</div>
-          <div className="content-preview-text">{preview}</div>
-        </div>
-      )}
 
       <div className="btn-group">
         <button className="btn btn-primary" onClick={onGenerateQuestions} disabled={!canGenerate}>
