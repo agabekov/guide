@@ -10,14 +10,14 @@
   }
 
   :root {
-    /* Default colors (will be overridden by mode classes) */
-    --bg-gradient-start: #667eea;
-    --bg-gradient-end: #764ba2;
-    --primary-color: #667eea;
-    --primary-dark: #764ba2;
-    --accent-color: #667eea;
-    --scrollbar-thumb: #667eea;
-    --scrollbar-thumb-hover: #764ba2;
+    /* Default colors match client mode (red theme) */
+    --bg-gradient-start: #dc2626;
+    --bg-gradient-end: #991b1b;
+    --primary-color: #dc2626;
+    --primary-dark: #991b1b;
+    --accent-color: #ef4444;
+    --scrollbar-thumb: #dc2626;
+    --scrollbar-thumb-hover: #991b1b;
   }
 
   body {
