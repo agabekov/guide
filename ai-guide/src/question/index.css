@@ -30,24 +30,24 @@
 
   /* Client mode - Rich Red Theme */
   body.mode-client {
-    --bg-gradient-start: #dc2626;
-    --bg-gradient-end: #991b1b;
-    --primary-color: #dc2626;
-    --primary-dark: #991b1b;
-    --accent-color: #ef4444;
-    --scrollbar-thumb: #dc2626;
-    --scrollbar-thumb-hover: #991b1b;
+    --bg-gradient-start: #dc2626 !important;
+    --bg-gradient-end: #991b1b !important;
+    --primary-color: #dc2626 !important;
+    --primary-dark: #991b1b !important;
+    --accent-color: #ef4444 !important;
+    --scrollbar-thumb: #dc2626 !important;
+    --scrollbar-thumb-hover: #991b1b !important;
   }
 
   /* Business mode - Very Dark Theme */
   body.mode-business {
-    --bg-gradient-start: #1a1a1a;
-    --bg-gradient-end: #0a0a0a;
-    --primary-color: #2a2a2a;
-    --primary-dark: #0a0a0a;
-    --accent-color: #3a3a3a;
-    --scrollbar-thumb: #2a2a2a;
-    --scrollbar-thumb-hover: #3a3a3a;
+    --bg-gradient-start: #1a1a1a !important;
+    --bg-gradient-end: #0a0a0a !important;
+    --primary-color: #2a2a2a !important;
+    --primary-dark: #0a0a0a !important;
+    --accent-color: #3a3a3a !important;
+    --scrollbar-thumb: #2a2a2a !important;
+    --scrollbar-thumb-hover: #3a3a3a !important;
   }
 
   h1, h2, h3, h4, h5, h6 {
