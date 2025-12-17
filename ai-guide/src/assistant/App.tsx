@@ -1,9 +1,10 @@
 /**
  * Content Assistant App - Editor Review Mode
  * Shows editor suggestions as inline comments that user can accept/reject
+ * Uses RAG for style consistency with existing FAQ database
  */
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   RefreshCw,
   Upload,
@@ -11,12 +12,42 @@ import {
   AlertCircle,
   Lightbulb,
   FileText,
+  Database,
 } from 'lucide-react';
 import { generateTextWithAI, getAvailableModels, sanitizeJSON } from './utils/aiService';
 import { HighlightedText, SuggestionCard, ReviewComplete } from './components';
+import { findSimilarFAQs, preloadModel } from '../question/services/ragService';
+import { compressChecklist } from '../question/services/checklistCompressor';
+import editorChecklistRaw from '../question/data/editor-checklist.txt?raw';
 import type { EditorSuggestion, EditorReview, SuggestionType } from '../shared/types';
+import type { FAQItem } from '../question/types';
+
+// Process checklist
+const editorChecklist = editorChecklistRaw
+  .split('\n')
+  .map((line) => line.trim())
+  .filter((line) => line.length > 0)
+  .join('\n');
 
 type ReviewState = 'input' | 'loading' | 'reviewing' | 'complete';
+
+// Format RAG examples for prompt
+const formatRAGExamples = (faqs: FAQItem[]): string => {
+  if (!faqs || faqs.length === 0) return '';
+
+  const examples = faqs.slice(0, 7).map((faq, i) => {
+    const answer = faq.answer.length > 300 ? faq.answer.slice(0, 300) + '...' : faq.answer;
+    return `${i + 1}. В: ${faq.question}
+   О: ${answer}`;
+  }).join('\n\n');
+
+  return `
+═══════════════════════════════════════
+ПРИМЕРЫ ИЗ БАЗЫ KASPI ГИДА (ориентируйся на их стиль):
+═══════════════════════════════════════
+${examples}
+`;
+};
 
 export const ContentAssistant: React.FC = () => {
   const [inputText, setInputText] = useState('');
@@ -25,14 +56,30 @@ export const ContentAssistant: React.FC = () => {
   const [review, setReview] = useState<EditorReview | null>(null);
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0);
   const [copiedNotification, setCopiedNotification] = useState(false);
+  const [ragStatus, setRagStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Preload RAG model on mount
+  useEffect(() => {
+    const initRAG = async () => {
+      try {
+        setRagStatus('loading');
+        await preloadModel();
+        setRagStatus('ready');
+      } catch (error) {
+        console.warn('RAG preload failed:', error);
+        setRagStatus('error');
+      }
+    };
+    initRAG();
+  }, []);
 
   // Get pending suggestions
   const pendingSuggestions = review?.suggestions.filter(s => s.status === 'pending') || [];
   const activeSuggestion = pendingSuggestions[activeSuggestionIndex];
 
   // Build AI prompt for editor review
-  const buildPrompt = (text: string, userComments: string) => {
+  const buildPrompt = (text: string, userComments: string, ragExamples: string, checklistSection: string) => {
     return `Ты — главный редактор Kaspi Гида с 10-летним опытом. Kaspi Гид — это FAQ-система для клиентов Kaspi (финтех, Казахстан).
 
 ТВОЯ ФИЛОСОФИЯ:
@@ -40,30 +87,11 @@ export const ContentAssistant: React.FC = () => {
 
 ТВОЯ ЗАДАЧА:
 Не переписывать текст, а оставить КОММЕНТАРИИ к конкретным фрагментам. Ты — наставник, который объясняет младшему коллеге, как писать лучше.
-
+${ragExamples}
 ═══════════════════════════════════════
-ЧЕК-ЛИСТ РЕДАКТОРА (проверяй каждый пункт):
+РЕДАКТОРСКИЙ ЧЕК-ЛИСТ (релевантные секции):
 ═══════════════════════════════════════
-
-□ ВОПРОС
-  - Начинается с "Как", "Что", "Где", "Почему", "Можно ли"?
-  - Содержит ключевые слова для поиска?
-  - Сформулирован так, как спросил бы реальный клиент?
-
-□ ОТВЕТ
-  - Сразу даёт решение (не начинается с предыстории)?
-  - Есть конкретные шаги, если это инструкция?
-  - Нет дублирования информации?
-
-□ ЯЗЫК
-  - Нет канцеляризмов: "является", "осуществляется", "в случае если", "данный"?
-  - Нет сложных предложений (больше 20 слов)?
-  - Глаголы вместо отглагольных существительных?
-  - Конкретика вместо абстракций ("в течение 2 дней" вместо "в ближайшее время")?
-
-□ ТОН
-  - Ты-формат (обращение к конкретному человеку)?
-  - Дружелюбно, но профессионально?
+${checklistSection}
 
 ═══════════════════════════════════════
 ТИПЫ ЗАМЕЧАНИЙ:
@@ -197,7 +225,26 @@ ${userComments ? `КОММЕНТАРИЙ ОТ АВТОРА:\n${userComments}\n\n
         return;
       }
 
-      const prompt = buildPrompt(inputText, comments);
+      // 1. Get similar FAQs from RAG (for style reference)
+      console.log('🔍 Searching similar FAQs...');
+      let ragExamples = '';
+      try {
+        const similarFAQs = await findSimilarFAQs(inputText, 7);
+        ragExamples = formatRAGExamples(similarFAQs);
+        console.log(`✅ Found ${similarFAQs.length} similar FAQs`);
+      } catch (ragError) {
+        console.warn('⚠️ RAG search failed, continuing without examples:', ragError);
+      }
+
+      // 2. Compress checklist to relevant sections
+      console.log('📋 Compressing checklist...');
+      const compressedChecklist = compressChecklist(inputText, editorChecklist);
+
+      // 3. Build prompt with RAG examples and checklist
+      const prompt = buildPrompt(inputText, comments, ragExamples, compressedChecklist);
+
+      // 4. Generate AI response
+      console.log('🤖 Generating editor review...');
       const response = await generateTextWithAI(prompt);
       const editorReview = parseAIResponse(response, inputText);
 
@@ -375,8 +422,25 @@ ${userComments ? `КОММЕНТАРИЙ ОТ АВТОРА:\n${userComments}\n\n
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Ассистент контент-менеджера</h1>
-          <p className="text-gray-600">Редактор проверит ваш текст и оставит комментарии к местам, которые можно улучшить</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Ассистент контент-менеджера</h1>
+              <p className="text-gray-600">Редактор проверит ваш текст и оставит комментарии к местам, которые можно улучшить</p>
+            </div>
+            {/* RAG Status Indicator */}
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg">
+              <Database className={`w-4 h-4 ${
+                ragStatus === 'ready' ? 'text-green-500' :
+                ragStatus === 'loading' ? 'text-yellow-500 animate-pulse' :
+                ragStatus === 'error' ? 'text-red-500' : 'text-gray-400'
+              }`} />
+              <span className="text-xs text-gray-600">
+                {ragStatus === 'ready' ? 'База знаний готова' :
+                 ragStatus === 'loading' ? 'Загрузка базы...' :
+                 ragStatus === 'error' ? 'База недоступна' : 'Инициализация...'}
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* Step 1: Input */}
