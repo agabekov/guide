@@ -117,7 +117,8 @@ ${comments ? `КОММЕНТАРИИ ОТ ПОЛЬЗОВАТЕЛЯ:\n${comments}
     }
   ],
   "complianceScore": 0-100,
-  "seoScore": 0-10
+  "seoScore": 0-10,
+  "editorComment": "комментарий редактора живым языком (2-3 предложения, объясни основные улучшения дружелюбным, профессиональным тоном)"
 }
 
 Верни ТОЛЬКО JSON, без дополнительного текста.`;
@@ -184,7 +185,8 @@ ${additionalComment}
       "after": "после",
       "checklistItem": "пункт"
     }
-  ]
+  ],
+  "editorComment": "комментарий редактора о проделанной доработке живым языком (2-3 предложения)"
 }
 
 Верни ТОЛЬКО JSON, без дополнительного текста.`;
@@ -206,7 +208,8 @@ ${additionalComment}
         correctedQuestion: result.correctedQuestion,
         correctedAnswer: result.correctedAnswer,
         changes: [...checkResult.changes, ...result.changes],
-        appliedComments: [...checkResult.appliedComments, additionalComment]
+        appliedComments: [...checkResult.appliedComments, additionalComment],
+        editorComment: result.editorComment || checkResult.editorComment
       };
 
       setCheckResult(updatedResult);
@@ -477,7 +480,7 @@ ${additionalComment}
                 </div>
               </div>
 
-              <div className="mt-6 flex gap-3">
+              <div className="mt-6 flex gap-3 mb-6">
                 <button
                   onClick={handleCopy}
                   className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
@@ -493,6 +496,23 @@ ${additionalComment}
                   Скачать .docx
                 </button>
               </div>
+
+              {/* Editor Comment */}
+              {checkResult.editorComment && (
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
+                  <div className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-bold">📝</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-sm font-semibold text-blue-900 mb-1">Комментарий от редактора</div>
+                      <div className="text-sm text-blue-800 leading-relaxed whitespace-pre-wrap">
+                        {checkResult.editorComment}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Detailed Changes */}

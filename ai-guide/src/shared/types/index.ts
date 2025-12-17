@@ -29,6 +29,7 @@ export interface CheckResult {
   seoScore: number;
   originalText: string;
   appliedComments: string[];
+  editorComment: string;
 }
 
 export interface Change {
