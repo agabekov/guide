@@ -99,38 +99,16 @@ export const SuggestionCard: React.FC<SuggestionCardProps> = ({
       </div>
 
       {/* Content */}
-      <div className="p-5 space-y-4">
-        {/* Problem */}
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <XCircle className="w-4 h-4 text-red-500" />
-            <span className="text-sm font-semibold text-gray-900">Проблема:</span>
-          </div>
-          <p className="text-sm text-gray-700 leading-relaxed pl-6">
-            {suggestion.problem}
-          </p>
-        </div>
-
-        {/* Why it matters */}
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <Lightbulb className="w-4 h-4 text-amber-500" />
-            <span className="text-sm font-semibold text-gray-900">Почему это важно:</span>
-          </div>
-          <p className="text-sm text-gray-700 leading-relaxed pl-6">
-            {suggestion.why}
-          </p>
-        </div>
-
-        {/* Before/After comparison */}
+      <div className="p-5 space-y-4 max-h-[500px] overflow-y-auto">
+        {/* Before/After comparison - moved to top for quick glance */}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <div className="text-xs font-semibold text-red-700 mb-1.5 flex items-center gap-1">
               <XCircle className="w-3 h-3" />
               Сейчас:
             </div>
-            <div className="bg-red-100 rounded-lg p-3 border border-red-200">
-              <p className="text-sm text-red-900 font-medium">
+            <div className="bg-red-100 rounded-lg p-3 border border-red-200 min-h-[60px]">
+              <p className="text-sm text-red-900 font-medium leading-relaxed">
                 «{suggestion.originalText}»
               </p>
             </div>
@@ -140,9 +118,39 @@ export const SuggestionCard: React.FC<SuggestionCardProps> = ({
               <CheckCircle className="w-3 h-3" />
               Предлагаю:
             </div>
-            <div className="bg-green-100 rounded-lg p-3 border border-green-200">
-              <p className="text-sm text-green-900 font-medium">
+            <div className="bg-green-100 rounded-lg p-3 border border-green-200 min-h-[60px]">
+              <p className="text-sm text-green-900 font-medium leading-relaxed">
                 «{suggestion.suggestedText}»
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Problem - detailed explanation */}
+        <div className="bg-white/60 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-red-100 flex items-center justify-center mt-0.5">
+              <XCircle className="w-3.5 h-3.5 text-red-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold text-gray-900 mb-1.5">В чём проблема</div>
+              <p className="text-sm text-gray-700 leading-relaxed">
+                {suggestion.problem}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Why it matters - detailed explanation */}
+        <div className="bg-white/60 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center mt-0.5">
+              <Lightbulb className="w-3.5 h-3.5 text-amber-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold text-gray-900 mb-1.5">Почему это важно</div>
+              <p className="text-sm text-gray-700 leading-relaxed">
+                {suggestion.why}
               </p>
             </div>
           </div>
