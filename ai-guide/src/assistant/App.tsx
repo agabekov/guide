@@ -1,231 +1,266 @@
 /**
- * Content Assistant App
- * Main component for the Kaspi Guide content checking tool
+ * Content Assistant App - Editor Review Mode
+ * Shows editor suggestions as inline comments that user can accept/reject
  */
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
-  AlertCircle,
-  CheckCircle,
-  Download,
-  Copy,
   RefreshCw,
   Upload,
-  ChevronDown,
-  ChevronUp,
+  MessageSquare,
+  AlertCircle,
+  Lightbulb,
+  FileText,
 } from 'lucide-react';
 import { generateTextWithAI, getAvailableModels, sanitizeJSON } from './utils/aiService';
-import type { CheckResult, Change } from '../shared/types';
+import { HighlightedText, SuggestionCard, ReviewComplete } from './components';
+import type { EditorSuggestion, EditorReview, SuggestionType } from '../shared/types';
+
+type ReviewState = 'input' | 'loading' | 'reviewing' | 'complete';
 
 export const ContentAssistant: React.FC = () => {
   const [inputText, setInputText] = useState('');
   const [comments, setComments] = useState('');
-  const [isChecking, setIsChecking] = useState(false);
-  const [checkResult, setCheckResult] = useState<CheckResult | null>(null);
-  const [additionalComment, setAdditionalComment] = useState('');
-  const [isApplyingComment, setIsApplyingComment] = useState(false);
-  const [iterationCount, setIterationCount] = useState(0);
-  const [showDetailedChanges, setShowDetailedChanges] = useState(true);
+  const [reviewState, setReviewState] = useState<ReviewState>('input');
+  const [review, setReview] = useState<EditorReview | null>(null);
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0);
   const [copiedNotification, setCopiedNotification] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Check text with AI
-  const handleCheckText = async () => {
-    setIsChecking(true);
-    setIterationCount(prev => prev + 1);
+  // Get pending suggestions
+  const pendingSuggestions = review?.suggestions.filter(s => s.status === 'pending') || [];
+  const activeSuggestion = pendingSuggestions[activeSuggestionIndex];
 
-    try {
-      // Check if API keys are configured
-      const availableModels = getAvailableModels();
-      if (availableModels.length === 0) {
-        alert('Не настроен ни один API ключ. Добавьте VITE_GROQ_API_KEY или VITE_OPENROUTER_API_KEY в .env файл.');
-        setIsChecking(false);
-        return;
-      }
+  // Build AI prompt for editor review
+  const buildPrompt = (text: string, userComments: string) => {
+    return `Я работаю контент-менеджером Kaspi Гида — FAQ-системы о продуктах и сервисах Kaspi. Kaspi — это казахстанский финтех сервис с широким спектром продуктов и сервисов.
 
-      // Create prompt for checking text
-      const prompt = `Я работаю контент-менеджером Kaspi Гида — FAQ-системы о продуктах и сервисах Kaspi. Kaspi — это казахстанский финтех сервис с широким спектром продуктов и сервисов.
+Ты — мой главный редактор. Твоя задача — НЕ переписывать текст, а оставить КОММЕНТАРИИ к конкретным фрагментам, которые нужно улучшить.
 
-Kaspi Гид состоит из двух разделов: Для клиентов (физические лица) и для партнёров (ИП и юридические лица).
+ПРИНЦИПЫ РАБОТЫ:
+1. Найди конкретные фрагменты текста, которые можно улучшить
+2. Для каждого фрагмента объясни:
+   - Что не так (problem)
+   - Почему это важно исправить (why)
+   - Предложи конкретную замену (suggestedText)
+3. Сохрани исходный текст — ты только комментируешь!
 
-Моя задача — создавать понятные, простые и стилистически выверенные ответы на вопросы пользователей.
+ЧТО ИСКАТЬ:
+- Канцеляризмы и сложные конструкции
+- Непонятные формулировки
+- Нарушения чек-листа контент-менеджера
+- Проблемы с SEO (отсутствие ключевых слов)
+- Стилистические несоответствия
 
-Ты — мой главный редактор. Твоя цель — помочь мне создавать идеальный контент для Kaspi Гида.
-
-ЧТО ТЫ ДЕЛАЕШЬ:
-- Проверяешь по чек-листу контент-менеджера
-- Указываешь конкретные нарушения
-- Ссылаешься на пункты чек-листа
-- Объясняешь, почему это важно исправить
-- Анализируешь комментарии заказчиков
-- Помогаешь понять суть замечаний
-- Предлагаешь конкретные варианты исправлений
-- Объясняешь логику изменений
-- Улучшаешь формулировки, даже если они формально правильны
-- Делаешь текст проще и понятнее
-- Убираешь канцелярит и сложные конструкции
-- Предлагаешь более естественные формулировки
-- Всегда объясняешь, почему твой вариант лучше
-- Проверяешь соответствие стилю Kaspi Гида
-- Сравниваешь с эталонными примерами (если приложены)
-- Следишь за единством стиля в рамках одного текста
-
-КАК ДАВАТЬ ФИДБЕК:
-✅ Структурируй по приоритетам:
-Сначала — критичные ошибки (нарушения чек-листа)
-Потом — замечания заказчиков
-В конце — рекомендации по улучшению
-
-✅ Будь конкретным:
-Цитируй проблемную фразу
-Объясняй, что не так
-Предлагай готовый вариант исправления
-
-✅ Объясняй WHY, а не только WHAT:
-Почему текущая формулировка хуже
-Как твой вариант улучшает понимание
-Какому принципу или пункту чек-листа это соответствует
-
-✅ Будь конструктивным:
-Отмечай, что сделано хорошо
-Давай четкие рекомендации, а не только критику
-
-КЛЮЧЕВЫЕ ПРИНЦИПЫ РАБОТЫ:
-- Ориентируйся на чек-лист как на основной стандарт качества
-- Помни о целевой аудитории (клиенты или партнёры)
-- Стремись к максимальной простоте и понятности
-- Сохраняй дружелюбный, но профессиональный тон
-- Избегай канцеляризмов и сложных конструкций
+ТИПЫ ЗАМЕЧАНИЙ:
+- critical: критические ошибки (нарушения чек-листа, фактические ошибки)
+- style: стилистические улучшения (канцеляризмы, сложные предложения)
+- seo: SEO-оптимизация (ключевые слова, заголовки)
 
 ИСХОДНЫЙ ТЕКСТ:
-${inputText}
+"""
+${text}
+"""
 
-${comments ? `КОММЕНТАРИИ ОТ ПОЛЬЗОВАТЕЛЯ:\n${comments}\n` : ''}
+${userComments ? `КОММЕНТАРИИ ОТ ПОЛЬЗОВАТЕЛЯ:\n${userComments}\n` : ''}
 
 ФОРМАТ ОТВЕТА (строго JSON):
 {
-  "correctedQuestion": "исправленный вопрос",
-  "correctedAnswer": "исправленный ответ",
-  "changes": [
+  "suggestions": [
     {
-      "category": "категория изменения",
+      "originalText": "точная цитата из исходного текста",
+      "suggestedText": "предлагаемая замена",
       "type": "critical|style|seo",
-      "description": "описание изменения с объяснением почему это важно",
-      "before": "текст до",
-      "after": "текст после",
+      "problem": "что не так с этим фрагментом (1-2 предложения)",
+      "why": "почему важно это исправить, какому принципу соответствует (1-2 предложения)",
       "checklistItem": "пункт чек-листа или принцип"
     }
   ],
-  "complianceScore": 0-100,
-  "seoScore": 0-10,
-  "editorComment": "комментарий редактора живым языком (2-3 предложения, объясни основные улучшения дружелюбным, профессиональным тоном)"
+  "overallComment": "общий комментарий редактора о тексте (2-3 предложения, дружелюбным тоном)"
 }
 
+ВАЖНО:
+- originalText должен быть ТОЧНОЙ цитатой из исходного текста
+- Не более 5-7 замечаний (самые важные)
+- Приоритет: critical > style > seo
+- Если текст хороший — не придумывай замечания искусственно
+
 Верни ТОЛЬКО JSON, без дополнительного текста.`;
+  };
 
-      const response = await generateTextWithAI(prompt);
+  // Parse AI response and create EditorReview
+  const parseAIResponse = (response: string, originalText: string): EditorReview => {
+    const jsonMatch = response.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('AI вернул некорректный формат ответа');
+    }
 
-      // Parse JSON from response
-      const jsonMatch = response.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error('AI вернул некорректный формат ответа');
+    const sanitizedJSON = sanitizeJSON(jsonMatch[0]);
+    const result = JSON.parse(sanitizedJSON);
+
+    // Find positions of each suggestion in the original text
+    const suggestions: EditorSuggestion[] = result.suggestions.map(
+      (s: { originalText: string; suggestedText: string; type: SuggestionType; problem: string; why: string; checklistItem: string }, idx: number) => {
+        const startIndex = originalText.indexOf(s.originalText);
+        const endIndex = startIndex !== -1 ? startIndex + s.originalText.length : -1;
+
+        return {
+          id: `suggestion-${idx}-${Date.now()}`,
+          startIndex: startIndex !== -1 ? startIndex : 0,
+          endIndex: endIndex !== -1 ? endIndex : 0,
+          originalText: s.originalText,
+          suggestedText: s.suggestedText,
+          type: s.type as SuggestionType,
+          problem: s.problem,
+          why: s.why,
+          checklistItem: s.checklistItem,
+          status: 'pending' as const,
+        };
+      }
+    ).filter((s: EditorSuggestion) => s.startIndex !== -1); // Filter out not found
+
+    // Calculate stats
+    const stats = {
+      critical: suggestions.filter((s: EditorSuggestion) => s.type === 'critical').length,
+      style: suggestions.filter((s: EditorSuggestion) => s.type === 'style').length,
+      seo: suggestions.filter((s: EditorSuggestion) => s.type === 'seo').length,
+    };
+
+    return {
+      originalText,
+      suggestions,
+      overallComment: result.overallComment || 'Текст проанализирован.',
+      stats,
+    };
+  };
+
+  // Check text with AI
+  const handleCheckText = async () => {
+    setReviewState('loading');
+
+    try {
+      const availableModels = getAvailableModels();
+      if (availableModels.length === 0) {
+        alert('Не настроен ни один API ключ. Добавьте VITE_GROQ_API_KEY или VITE_OPENROUTER_API_KEY в .env файл.');
+        setReviewState('input');
+        return;
       }
 
-      const sanitizedJSON = sanitizeJSON(jsonMatch[0]);
-      const result = JSON.parse(sanitizedJSON);
+      const prompt = buildPrompt(inputText, comments);
+      const response = await generateTextWithAI(prompt);
+      const editorReview = parseAIResponse(response, inputText);
 
-      // Add metadata
-      result.originalText = inputText;
-      result.appliedComments = comments ? [comments] : [];
+      setReview(editorReview);
+      setActiveSuggestionIndex(0);
 
-      setCheckResult(result);
+      if (editorReview.suggestions.length === 0) {
+        setReviewState('complete');
+      } else {
+        setReviewState('reviewing');
+      }
     } catch (error) {
       alert(`Ошибка при проверке текста: ${(error as Error).message}`);
       console.error(error);
-    } finally {
-      setIsChecking(false);
+      setReviewState('input');
     }
   };
 
-  // Apply additional comment with AI
-  const handleApplyComment = async () => {
-    if (!additionalComment.trim() || !checkResult) return;
+  // Handle suggestion actions
+  const handleAccept = useCallback((id: string) => {
+    if (!review) return;
 
-    setIsApplyingComment(true);
-    setIterationCount(prev => prev + 1);
+    const updatedSuggestions = review.suggestions.map(s =>
+      s.id === id ? { ...s, status: 'accepted' as const } : s
+    );
 
-    try {
-      const prompt = `Ты - редактор контента для Kaspi Гид. Доработай текст с учётом комментария пользователя.
+    setReview({ ...review, suggestions: updatedSuggestions });
 
-ТЕКУЩИЙ ВОПРОС:
-${checkResult.correctedQuestion}
-
-ТЕКУЩИЙ ОТВЕТ:
-${checkResult.correctedAnswer}
-
-КОММЕНТАРИЙ ДЛЯ ДОРАБОТКИ:
-${additionalComment}
-
-ТРЕБОВАНИЯ:
-1. Внеси изменения согласно комментарию
-2. Сохрани качество и стиль текста
-3. Не ухудшай SEO
-4. Верни доработанный текст
-
-ФОРМАТ ОТВЕТА (строго JSON):
-{
-  "correctedQuestion": "доработанный вопрос",
-  "correctedAnswer": "доработанный ответ",
-  "changes": [
-    {
-      "category": "категория",
-      "type": "critical|style|seo",
-      "description": "что изменилось",
-      "before": "до",
-      "after": "после",
-      "checklistItem": "пункт"
+    // Move to next pending suggestion or complete
+    const nextPending = updatedSuggestions.filter(s => s.status === 'pending');
+    if (nextPending.length === 0) {
+      setReviewState('complete');
+    } else {
+      setActiveSuggestionIndex(Math.min(activeSuggestionIndex, nextPending.length - 1));
     }
-  ],
-  "editorComment": "комментарий редактора о проделанной доработке живым языком (2-3 предложения)"
-}
+  }, [review, activeSuggestionIndex]);
 
-Верни ТОЛЬКО JSON, без дополнительного текста.`;
+  const handleReject = useCallback((id: string) => {
+    if (!review) return;
 
-      const response = await generateTextWithAI(prompt);
+    const updatedSuggestions = review.suggestions.map(s =>
+      s.id === id ? { ...s, status: 'rejected' as const } : s
+    );
 
-      // Parse JSON from response
-      const jsonMatch = response.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error('AI вернул некорректный формат ответа');
-      }
+    setReview({ ...review, suggestions: updatedSuggestions });
 
-      const sanitizedJSON = sanitizeJSON(jsonMatch[0]);
-      const result = JSON.parse(sanitizedJSON);
+    const nextPending = updatedSuggestions.filter(s => s.status === 'pending');
+    if (nextPending.length === 0) {
+      setReviewState('complete');
+    } else {
+      setActiveSuggestionIndex(Math.min(activeSuggestionIndex, nextPending.length - 1));
+    }
+  }, [review, activeSuggestionIndex]);
 
-      // Update result with new changes
-      const updatedResult: CheckResult = {
-        ...checkResult,
-        correctedQuestion: result.correctedQuestion,
-        correctedAnswer: result.correctedAnswer,
-        changes: [...checkResult.changes, ...result.changes],
-        appliedComments: [...checkResult.appliedComments, additionalComment],
-        editorComment: result.editorComment || checkResult.editorComment
-      };
+  const handleAcceptAll = useCallback(() => {
+    if (!review) return;
 
-      setCheckResult(updatedResult);
-      setAdditionalComment('');
-    } catch (error) {
-      alert(`Ошибка при доработке текста: ${(error as Error).message}`);
-      console.error(error);
-    } finally {
-      setIsApplyingComment(false);
+    const updatedSuggestions = review.suggestions.map(s =>
+      s.status === 'pending' ? { ...s, status: 'accepted' as const } : s
+    );
+
+    setReview({ ...review, suggestions: updatedSuggestions });
+    setReviewState('complete');
+  }, [review]);
+
+  const handleRejectAll = useCallback(() => {
+    if (!review) return;
+
+    const updatedSuggestions = review.suggestions.map(s =>
+      s.status === 'pending' ? { ...s, status: 'rejected' as const } : s
+    );
+
+    setReview({ ...review, suggestions: updatedSuggestions });
+    setReviewState('complete');
+  }, [review]);
+
+  // Navigation
+  const handlePrevious = () => {
+    setActiveSuggestionIndex(Math.max(0, activeSuggestionIndex - 1));
+  };
+
+  const handleNext = () => {
+    setActiveSuggestionIndex(Math.min(pendingSuggestions.length - 1, activeSuggestionIndex + 1));
+  };
+
+  const handleSuggestionClick = (id: string) => {
+    const index = pendingSuggestions.findIndex(s => s.id === id);
+    if (index !== -1) {
+      setActiveSuggestionIndex(index);
     }
   };
+
+  // Get final text
+  const getFinalText = useCallback(() => {
+    if (!review) return '';
+
+    let result = review.originalText;
+    const acceptedSuggestions = [...review.suggestions]
+      .filter(s => s.status === 'accepted')
+      .sort((a, b) => b.startIndex - a.startIndex);
+
+    acceptedSuggestions.forEach(suggestion => {
+      result =
+        result.slice(0, suggestion.startIndex) +
+        suggestion.suggestedText +
+        result.slice(suggestion.endIndex);
+    });
+
+    return result;
+  }, [review]);
 
   // Copy result to clipboard
   const handleCopy = () => {
-    if (!checkResult) return;
-    const textToCopy = `${checkResult.correctedQuestion}\n\n${checkResult.correctedAnswer}`;
+    const textToCopy = getFinalText();
     navigator.clipboard.writeText(textToCopy);
     setCopiedNotification(true);
     setTimeout(() => setCopiedNotification(false), 2000);
@@ -233,7 +268,6 @@ ${additionalComment}
 
   // Download DOCX (placeholder)
   const handleDownload = () => {
-    // In production version this will generate .docx file
     alert('В финальной версии здесь будет скачивание .docx файла');
   };
 
@@ -241,375 +275,211 @@ ${additionalComment}
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // In production version this will parse .docx file
       setInputText(`Как получить золотую карту?\n\nНеобходимо осуществить заполнение анкеты в мобильном приложении Kaspi.kz. После этого нужно дождаться одобрения. Карту доставят бесплатно.`);
     }
   };
 
   // Start new check
   const handleNewCheck = () => {
-    if (checkResult && !window.confirm('Начать новую проверку? Несохранённые данные будут потеряны.')) {
+    if (reviewState !== 'input' && !window.confirm('Начать новую проверку? Несохранённые данные будут потеряны.')) {
       return;
     }
     setInputText('');
     setComments('');
-    setCheckResult(null);
-    setAdditionalComment('');
-    setIterationCount(0);
-    setShowDetailedChanges(false);
+    setReview(null);
+    setActiveSuggestionIndex(0);
+    setReviewState('input');
   };
 
-  const getChangeIcon = (type: Change['type']) => {
-    switch(type) {
-      case 'critical': return <AlertCircle className="w-4 h-4 text-red-500" />;
-      case 'style': return <AlertCircle className="w-4 h-4 text-yellow-500" />;
-      case 'seo': return <AlertCircle className="w-4 h-4 text-blue-500" />;
-      default: return <AlertCircle className="w-4 h-4 text-gray-500" />;
-    }
-  };
+  // Stats display
+  const renderStats = () => {
+    if (!review) return null;
 
-  const criticalCount = checkResult?.changes.filter(c => c.type === 'critical').length || 0;
-  const styleCount = checkResult?.changes.filter(c => c.type === 'style').length || 0;
-  const seoCount = checkResult?.changes.filter(c => c.type === 'seo').length || 0;
+    return (
+      <div className="flex items-center gap-4 text-sm">
+        {review.stats.critical > 0 && (
+          <div className="flex items-center gap-1.5">
+            <AlertCircle className="w-4 h-4 text-red-500" />
+            <span className="text-gray-700">{review.stats.critical} критических</span>
+          </div>
+        )}
+        {review.stats.style > 0 && (
+          <div className="flex items-center gap-1.5">
+            <Lightbulb className="w-4 h-4 text-yellow-500" />
+            <span className="text-gray-700">{review.stats.style} стилистических</span>
+          </div>
+        )}
+        {review.stats.seo > 0 && (
+          <div className="flex items-center gap-1.5">
+            <FileText className="w-4 h-4 text-blue-500" />
+            <span className="text-gray-700">{review.stats.seo} SEO</span>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Ассистент контент-менеджера</h1>
-            <p className="text-gray-600">Автоматическая проверка вопросов и ответов на соответствие стандартам Kaspi Гид</p>
-          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Ассистент контент-менеджера</h1>
+          <p className="text-gray-600">Редактор проверит ваш текст и оставит комментарии к местам, которые можно улучшить</p>
         </div>
 
         {/* Step 1: Input */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">1</div>
-            <h2 className="text-xl font-semibold text-gray-900">Введите текст для проверки</h2>
-          </div>
+        {(reviewState === 'input' || reviewState === 'loading') && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">1</div>
+              <h2 className="text-xl font-semibold text-gray-900">Введите текст для проверки</h2>
+            </div>
 
-          <div className="mb-4">
-            <div className="flex items-center justify-between mb-3">
-              <label className="block text-sm font-semibold text-gray-900">
-                Вопрос и ответ
-              </label>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 transition-colors"
-              >
-                <Upload className="w-4 h-4" />
-                Загрузить .docx
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".docx"
-                onChange={handleFileUpload}
-                className="hidden"
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-3">
+                <label className="block text-sm font-semibold text-gray-900">
+                  Вопрос и ответ
+                </label>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 transition-colors"
+                >
+                  <Upload className="w-4 h-4" />
+                  Загрузить .docx
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".docx"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+              </div>
+              <textarea
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                placeholder="Вставьте вопрос и ответ"
+                className="w-full h-48 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
+                maxLength={3000}
+                disabled={reviewState === 'loading'}
               />
-            </div>
-            <textarea
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              placeholder="Вставьте вопрос и ответ"
-              className="w-full h-48 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
-              maxLength={3000}
-            />
-            <div className="flex justify-between items-center mt-2">
-              <span className="text-xs text-gray-500">
-                AI автоматически определит вопрос и ответ
-              </span>
-              <span className="text-xs text-gray-500">
-                {inputText.length} / 3000
-              </span>
-            </div>
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-sm font-semibold text-gray-900 mb-2">
-              Комментарии для AI <span className="text-gray-400 font-normal">(необязательно)</span>
-            </label>
-            <textarea
-              value={comments}
-              onChange={(e) => setComments(e.target.value)}
-              placeholder='Например: "Сделай короче", "Добавь информацию о сроках", "Упрости формулировки"'
-              className="w-full h-20 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
-              maxLength={1000}
-            />
-            <div className="flex justify-between items-center mt-2">
-              <span className="text-xs text-gray-500">
-                AI учтёт ваши комментарии при проверке
-              </span>
-              <span className="text-xs text-gray-500">
-                {comments.length} / 1000
-              </span>
-            </div>
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              onClick={handleCheckText}
-              disabled={!inputText.trim() || isChecking}
-              className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md disabled:shadow-none flex items-center justify-center gap-2"
-            >
-              {isChecking ? (
-                <>
-                  <RefreshCw className="w-5 h-5 animate-spin" />
-                  {comments.trim() ? 'Проверяем ваш текст с учётом комментариев...' : 'Проверяем ваш текст...'}
-                </>
-              ) : (
-                'Проверить текст'
-              )}
-            </button>
-
-            {checkResult && (
-              <button
-                onClick={handleNewCheck}
-                className="bg-white text-gray-700 py-3 px-6 rounded-lg font-medium hover:bg-gray-50 border border-gray-300 transition-all flex items-center justify-center gap-2"
-              >
-                <RefreshCw className="w-5 h-5" />
-                Новая проверка
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Step 2: Results */}
-        {checkResult && (
-          <>
-            {/* Status Overview */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center">
-                  <CheckCircle className="w-5 h-5" />
-                </div>
-                <h2 className="text-xl font-semibold text-gray-900">Результаты проверки</h2>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4 mb-4">
-                <div className="bg-green-50 rounded-lg p-4 text-center">
-                  <div className="text-3xl font-bold text-green-600">{checkResult.complianceScore}%</div>
-                  <div className="text-xs text-green-700 mt-1">Соответствие стандартам</div>
-                </div>
-                <div className="bg-blue-50 rounded-lg p-4 text-center">
-                  <div className="text-3xl font-bold text-blue-600">{checkResult.seoScore}/10</div>
-                  <div className="text-xs text-blue-700 mt-1">SEO-оценка</div>
-                </div>
-                <div className="bg-purple-50 rounded-lg p-4 text-center">
-                  <div className="text-3xl font-bold text-purple-600">{checkResult.changes.length}</div>
-                  <div className="text-xs text-purple-700 mt-1">Исправлений</div>
-                </div>
-              </div>
-
-              {iterationCount > 0 && (
-                <div className="text-sm text-gray-600 mb-3">
-                  <span className="font-medium">Итерация:</span> {iterationCount}
-                </div>
-              )}
-
-              {checkResult.appliedComments.length > 0 && (
-                <div className="bg-blue-50 rounded-lg p-3">
-                  <div className="text-xs font-semibold text-blue-900 mb-2">Учтены комментарии:</div>
-                  {checkResult.appliedComments.map((comment, idx) => (
-                    <div key={idx} className="text-xs text-blue-700 mb-1">• {comment}</div>
-                  ))}
-                </div>
-              )}
-
-              <div className="mt-4 flex items-center gap-4 text-sm">
-                <span className="font-medium text-gray-900">Типы исправлений:</span>
-                {criticalCount > 0 && (
-                  <div className="flex items-center gap-1">
-                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                    <span className="text-gray-700">{criticalCount} критических</span>
-                  </div>
-                )}
-                {styleCount > 0 && (
-                  <div className="flex items-center gap-1">
-                    <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                    <span className="text-gray-700">{styleCount} стилистических</span>
-                  </div>
-                )}
-                {seoCount > 0 && (
-                  <div className="flex items-center gap-1">
-                    <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                    <span className="text-gray-700">{seoCount} SEO</span>
-                  </div>
-                )}
+              <div className="flex justify-between items-center mt-2">
+                <span className="text-xs text-gray-500">
+                  Редактор найдёт места для улучшения и объяснит, что исправить
+                </span>
+                <span className="text-xs text-gray-500">
+                  {inputText.length} / 3000
+                </span>
               </div>
             </div>
 
-            {/* Side-by-side Comparison */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">2</div>
-                <h2 className="text-xl font-semibold text-gray-900">Сравнение: Было → Стало</h2>
-              </div>
-
-              <div className="grid grid-cols-2 gap-6">
-                {/* Before */}
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="text-sm font-bold text-red-700 bg-red-50 px-3 py-1 rounded-full">БЫЛО</div>
-                  </div>
-                  <div className="bg-red-50 rounded-lg p-4 border-2 border-red-200 min-h-[300px]">
-                    <div className="text-base font-bold text-gray-900 mb-3 whitespace-pre-wrap">
-                      {checkResult.originalText.split('\n\n')[0] || 'Как получить золотую карту?'}
-                    </div>
-                    <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-                      {checkResult.originalText.split('\n\n').slice(1).join('\n\n') || 'Необходимо осуществить заполнение анкеты в мобильном приложении Kaspi.kz. После этого нужно дождаться одобрения. Карту доставят бесплатно.'}
-                    </div>
-                  </div>
-                </div>
-
-                {/* After */}
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="text-sm font-bold text-green-700 bg-green-50 px-3 py-1 rounded-full">СТАЛО</div>
-                  </div>
-                  <div className="bg-green-50 rounded-lg p-4 border-2 border-green-200 min-h-[300px]">
-                    <div className="text-base font-bold text-gray-900 mb-3">
-                      {checkResult.correctedQuestion}
-                    </div>
-                    <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-                      {checkResult.correctedAnswer}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-6 flex gap-3 mb-6">
-                <button
-                  onClick={handleCopy}
-                  className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
-                >
-                  <Copy className="w-5 h-5" />
-                  Копировать исправленный текст
-                </button>
-                <button
-                  onClick={handleDownload}
-                  className="bg-white text-gray-700 py-3 px-6 rounded-lg font-medium hover:bg-gray-50 border border-gray-300 transition-all flex items-center justify-center gap-2"
-                >
-                  <Download className="w-5 h-5" />
-                  Скачать .docx
-                </button>
-              </div>
-
-              {/* Editor Comment */}
-              {checkResult.editorComment && (
-                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
-                  <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-xs font-bold">📝</span>
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-sm font-semibold text-blue-900 mb-1">Комментарий от редактора</div>
-                      <div className="text-sm text-blue-800 leading-relaxed whitespace-pre-wrap">
-                        {checkResult.editorComment}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Detailed Changes */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-              <button
-                onClick={() => setShowDetailedChanges(!showDetailedChanges)}
-                className="w-full flex items-center justify-between mb-4"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">3</div>
-                  <h2 className="text-xl font-semibold text-gray-900">Детализация изменений ({checkResult.changes.length})</h2>
-                </div>
-                {showDetailedChanges ? <ChevronUp className="w-6 h-6 text-gray-600" /> : <ChevronDown className="w-6 h-6 text-gray-600" />}
-              </button>
-
-              {showDetailedChanges && (
-                <div className="space-y-4">
-                  {checkResult.changes.map((change, idx) => (
-                    <div key={idx} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-start gap-3 mb-3">
-                        {getChangeIcon(change.type)}
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-sm font-bold text-gray-900">{change.category}</span>
-                            <span className="text-xs text-gray-500">• {change.checklistItem}</span>
-                          </div>
-                          <div className="text-sm text-gray-700">{change.description}</div>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <div className="text-xs font-semibold text-red-700 mb-2">Было:</div>
-                          <div className="bg-red-50 rounded p-3 border border-red-200">
-                            <div className="text-sm text-red-900">{change.before}</div>
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-xs font-semibold text-green-700 mb-2">Стало:</div>
-                          <div className="bg-green-50 rounded p-3 border border-green-200">
-                            <div className="text-sm text-green-900">{change.after}</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Additional Comments */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">4</div>
-                <h2 className="text-xl font-semibold text-gray-900">Доработка текста</h2>
-              </div>
-
+            <div className="mb-4">
               <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Комментарий для доработки
+                Комментарии для редактора <span className="text-gray-400 font-normal">(необязательно)</span>
               </label>
               <textarea
-                value={additionalComment}
-                onChange={(e) => setAdditionalComment(e.target.value)}
-                placeholder="Укажите, что нужно изменить или добавить"
-                className="w-full h-24 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
+                value={comments}
+                onChange={(e) => setComments(e.target.value)}
+                placeholder='Например: "Обрати внимание на длину предложений", "Проверь SEO"'
+                className="w-full h-20 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
                 maxLength={1000}
+                disabled={reviewState === 'loading'}
               />
-              <div className="flex justify-between items-center mt-2 mb-4">
-                <span className="text-xs text-gray-500">
-                  AI доработает текст с учётом комментария
-                </span>
-                <span className="text-xs text-gray-500">
-                  {additionalComment.length} / 1000
-                </span>
+            </div>
+
+            <button
+              onClick={handleCheckText}
+              disabled={!inputText.trim() || reviewState === 'loading'}
+              className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md disabled:shadow-none flex items-center justify-center gap-2"
+            >
+              {reviewState === 'loading' ? (
+                <>
+                  <RefreshCw className="w-5 h-5 animate-spin" />
+                  Редактор анализирует текст...
+                </>
+              ) : (
+                <>
+                  <MessageSquare className="w-5 h-5" />
+                  Получить комментарии редактора
+                </>
+              )}
+            </button>
+          </div>
+        )}
+
+        {/* Step 2: Review Mode */}
+        {reviewState === 'reviewing' && review && (
+          <>
+            {/* Stats Header */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">2</div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900">Рассмотрите замечания редактора</h2>
+                    <p className="text-sm text-gray-500">
+                      Осталось: {pendingSuggestions.length} из {review.suggestions.length}
+                    </p>
+                  </div>
+                </div>
+                {renderStats()}
               </div>
-              <button
-                onClick={handleApplyComment}
-                disabled={!additionalComment.trim() || isApplyingComment}
-                className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
-              >
-                {isApplyingComment ? (
-                  <>
-                    <RefreshCw className="w-5 h-5 animate-spin" />
-                    Дорабатываем текст...
-                  </>
-                ) : (
-                  'Применить комментарий'
+            </div>
+
+            {/* Main Review Area */}
+            <div className="grid grid-cols-2 gap-6">
+              {/* Left: Text with Highlights */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="px-5 py-3 border-b border-gray-200 bg-gray-50">
+                  <h3 className="font-semibold text-gray-900">Ваш текст</h3>
+                  <p className="text-xs text-gray-500">Нажмите на выделенный фрагмент, чтобы увидеть комментарий</p>
+                </div>
+                <div className="p-5">
+                  <HighlightedText
+                    text={review.originalText}
+                    suggestions={review.suggestions}
+                    activeSuggestionId={activeSuggestion?.id || null}
+                    onSuggestionClick={handleSuggestionClick}
+                  />
+                </div>
+              </div>
+
+              {/* Right: Suggestion Card */}
+              <div>
+                {activeSuggestion && (
+                  <SuggestionCard
+                    suggestion={activeSuggestion}
+                    currentIndex={activeSuggestionIndex}
+                    totalCount={pendingSuggestions.length}
+                    onAccept={handleAccept}
+                    onReject={handleReject}
+                    onPrevious={handlePrevious}
+                    onNext={handleNext}
+                    onAcceptAll={handleAcceptAll}
+                    onRejectAll={handleRejectAll}
+                  />
                 )}
-              </button>
+              </div>
             </div>
           </>
+        )}
+
+        {/* Step 3: Complete */}
+        {reviewState === 'complete' && review && (
+          <ReviewComplete
+            originalText={review.originalText}
+            suggestions={review.suggestions}
+            overallComment={review.overallComment}
+            onCopy={handleCopy}
+            onDownload={handleDownload}
+            onNewCheck={handleNewCheck}
+          />
         )}
 
         {/* Notification */}
         {copiedNotification && (
           <div className="fixed bottom-6 right-6 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-fade-in z-50">
-            <CheckCircle className="w-5 h-5" />
             Скопировано!
           </div>
         )}
