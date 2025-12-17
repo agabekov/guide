@@ -44,12 +44,12 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({ onFilesSelect })
         onDrop={handleDrop}
         onClick={handleClick}
       >
-        <div className="upload-icon">📁</div>
-        <div style={{ fontSize: '16px', color: '#1a202c', marginBottom: '8px' }}>
-          Перетащите файлы сюда или нажмите для выбора
+        <div className="upload-icon">{isDragging ? '📂' : '📁'}</div>
+        <div style={{ fontSize: '17px', color: '#1a202c', marginBottom: '10px', fontWeight: 600 }}>
+          {isDragging ? 'Отпустите файлы здесь' : 'Перетащите файлы сюда или нажмите для выбора'}
         </div>
-        <div style={{ fontSize: '13px', color: '#718096' }}>
-          Поддерживаются: .docx, .pdf (до 10 МБ) и изображения .jpg, .png (до 20 МБ)
+        <div style={{ fontSize: '14px', color: '#718096', lineHeight: '1.6' }}>
+          Поддерживаются: <strong>.docx, .pdf</strong> (до 10 МБ) и <strong>.jpg, .png</strong> (до 20 МБ)
         </div>
       </div>
       <input

@@ -5,3 +5,4 @@ export { QAPair } from './QAPair';
 export { ProgressBar } from './ProgressBar';
 export { Notification } from './Notification';
 export { StatCard } from './StatCard';
+export { WizardStepper } from './WizardStepper';

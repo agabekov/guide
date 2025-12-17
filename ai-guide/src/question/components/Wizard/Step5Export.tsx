@@ -32,19 +32,13 @@ export const Step5Export: React.FC<Step5ExportProps> = ({ qaData, onCopy, onDown
         </button>
       </div>
 
-      <div
-        style={{
-          marginTop: '24px',
-          padding: '20px',
-          background: '#f0fdf4',
-          borderRadius: '10px',
-          borderLeft: '4px solid #48bb78',
-        }}
-      >
-        <div style={{ fontWeight: '600', color: '#166534', marginBottom: '8px' }}>✅ Готово!</div>
-        <div style={{ color: '#166534', fontSize: '14px' }}>
-          Теперь проверьте результат и согласуйте с заказчиком, редактором и директором перед
-          публикацией.
+      <div className="success-message">
+        <div className="success-icon">✅</div>
+        <div className="success-content">
+          <div className="success-title">Готово!</div>
+          <div className="success-text">
+            Теперь проверьте результат и согласуйте с заказчиком, редактором и директором перед публикацией.
+          </div>
         </div>
       </div>
     </div>
