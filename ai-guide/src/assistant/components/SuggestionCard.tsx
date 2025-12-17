@@ -77,23 +77,25 @@ export const SuggestionCard: React.FC<SuggestionCardProps> = ({
   const TypeIcon = config.icon;
 
   return (
-    <div className={`${config.bgColor} rounded-xl border-2 ${config.borderColor} overflow-hidden`}>
+    <div className="bg-white/98 backdrop-blur-xl rounded-3xl border border-white/30 overflow-hidden animate-fade-in" style={{
+      boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 24px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)'
+    }}>
       {/* Header */}
-      <div className="px-5 py-3 border-b border-gray-200 bg-white/50 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-lg ${config.labelBg}`}>
-            <TypeIcon className={`w-5 h-5 ${config.iconColor}`} />
+      <div className={`px-6 py-4 border-b border-gray-200 ${config.bgColor} backdrop-blur-sm flex items-center justify-between`}>
+        <div className="flex items-center gap-4">
+          <div className={`p-3 rounded-xl ${config.labelBg} shadow-md`}>
+            <TypeIcon className={`w-6 h-6 ${config.iconColor}`} />
           </div>
           <div>
-            <span className={`text-sm font-semibold ${config.labelText}`}>
+            <span className={`text-base font-bold ${config.labelText}`}>
               {config.label}
             </span>
-            <span className="text-xs text-gray-500 ml-2">
+            <span className="text-sm text-gray-600 ml-2 font-medium">
               · {suggestion.checklistItem}
             </span>
           </div>
         </div>
-        <div className="text-sm text-gray-500 font-medium">
+        <div className="text-base text-gray-700 font-bold bg-white/60 px-3 py-1 rounded-lg">
           {currentIndex + 1} из {totalCount}
         </div>
       </div>
@@ -158,25 +160,25 @@ export const SuggestionCard: React.FC<SuggestionCardProps> = ({
       </div>
 
       {/* Actions */}
-      <div className="px-5 py-4 bg-white/70 border-t border-gray-200">
+      <div className="px-6 py-5 bg-gradient-to-r from-gray-50/80 to-white/80 backdrop-blur-sm border-t border-gray-200">
         <div className="flex items-center justify-between">
           {/* Navigation */}
           <div className="flex items-center gap-2">
             <button
               onClick={onPrevious}
               disabled={currentIndex === 0}
-              className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="p-3 rounded-xl hover:bg-white/80 disabled:opacity-30 disabled:cursor-not-allowed transition-all hover:shadow-md"
               title="Предыдущее"
             >
-              <ChevronLeft className="w-5 h-5 text-gray-600" />
+              <ChevronLeft className="w-5 h-5 text-gray-700" />
             </button>
             <button
               onClick={onNext}
               disabled={currentIndex === totalCount - 1}
-              className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="p-3 rounded-xl hover:bg-white/80 disabled:opacity-30 disabled:cursor-not-allowed transition-all hover:shadow-md"
               title="Следующее"
             >
-              <ChevronRight className="w-5 h-5 text-gray-600" />
+              <ChevronRight className="w-5 h-5 text-gray-700" />
             </button>
           </div>
 
@@ -184,16 +186,19 @@ export const SuggestionCard: React.FC<SuggestionCardProps> = ({
           <div className="flex items-center gap-3">
             <button
               onClick={() => onReject(suggestion.id)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors font-medium text-sm"
+              className="flex items-center gap-2 px-5 py-3 rounded-xl border border-gray-300 bg-white/80 backdrop-blur-sm text-gray-700 hover:bg-gray-50 hover:shadow-md transition-all font-semibold text-sm"
             >
-              <X className="w-4 h-4" />
+              <X className="w-5 h-5" />
               Отклонить
             </button>
             <button
               onClick={() => onAccept(suggestion.id)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors font-medium text-sm shadow-sm"
+              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-green-600 to-green-500 text-white hover:shadow-lg transition-all font-semibold text-sm hover:transform hover:-translate-y-0.5"
+              style={{
+                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3), 0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+              }}
             >
-              <CheckCircle className="w-4 h-4" />
+              <CheckCircle className="w-5 h-5" />
               Принять
             </button>
           </div>
