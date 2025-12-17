@@ -1,10 +1,10 @@
 import editorChecklistRaw from '../data/editor-checklist.txt?raw';
 import type { FAQItem } from '../types';
-import { findSimilarFAQs } from './ragService';
-import { compressChecklist } from './checklistCompressor';
-import { getCacheKey, getCachedAnswers, setCachedAnswers } from './cacheService';
-import { getGlobalStyleAnalysis, formatStyleGuide } from './styleAnalysisService';
-import allFAQsData from '../data/faq.json';
+import { findSimilarFAQs } from '../../question/services/ragService';
+import { compressChecklist } from '../../question/services/checklistCompressor';
+import { getCacheKey, getCachedAnswers, setCachedAnswers } from '../../question/services/cacheService';
+import { getGlobalStyleAnalysis, formatStyleGuide } from '../../question/services/styleAnalysisService';
+import allFAQsData from '../../question/data/faq.json';
 
 const groqApiKey = import.meta.env.VITE_GROQ_API_KEY;
 const openrouterApiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
