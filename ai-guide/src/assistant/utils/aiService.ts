@@ -22,7 +22,6 @@ export const sanitizeJSON = (jsonString: string): string => {
 
     for (let i = 0; i < jsonString.length; i++) {
       const char = jsonString[i];
-      const nextChar = jsonString[i + 1];
 
       if (escape) {
         result += char;
