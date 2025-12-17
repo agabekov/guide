@@ -1,5 +1,5 @@
 import editorChecklistRaw from '../data/editor-checklist.txt?raw';
-import type { FAQItem } from '../types';
+import type { FAQItem } from '../../question/types';
 import { findSimilarFAQs } from '../../question/services/ragService';
 import { compressChecklist } from '../../question/services/checklistCompressor';
 import { getCacheKey, getCachedAnswers, setCachedAnswers } from '../../question/services/cacheService';
