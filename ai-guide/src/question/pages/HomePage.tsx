@@ -9,7 +9,7 @@ import {
   LoadingAnswers,
   LoadingEdits,
 } from '../components/Wizard';
-import { Notification } from '../components/shared';
+import { Notification, WizardStepper } from '../components/shared';
 import type { WizardStep, UploadedFile, Question, QAPair } from '../types';
 import { generateQuestions, generateAnswers } from '../services/groqService';
 import faqDataRaw from '../data/faq.json';
@@ -304,6 +304,9 @@ const HomePage: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Wizard Stepper */}
+      <WizardStepper currentStep={currentStep} />
 
       {/* Step 1: Input */}
       {currentStep === 'step1' && (
