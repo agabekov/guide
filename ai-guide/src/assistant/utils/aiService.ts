@@ -4,7 +4,9 @@
  */
 
 import type { ModelConfig } from '../../shared/types';
-import { getApiKey } from './apiKeyStorage';
+
+const groqApiKey = import.meta.env.VITE_GROQ_API_KEY;
+const openrouterApiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
@@ -26,8 +28,12 @@ export const MODEL_CONFIGS: ModelConfig[] = [
  */
 export const getAvailableModels = (): ModelConfig[] => {
   return MODEL_CONFIGS.filter(config => {
-    const apiKey = getApiKey(config.provider);
-    return apiKey && apiKey.trim() !== '';
+    if (config.provider === 'groq') {
+      return groqApiKey && groqApiKey.trim() !== '';
+    } else if (config.provider === 'openrouter') {
+      return openrouterApiKey && openrouterApiKey.trim() !== '';
+    }
+    return false;
   });
 };
 
@@ -40,10 +46,10 @@ const callAPI = async (
 ): Promise<string> => {
   const { name: modelName, provider } = modelConfig;
   const apiUrl = provider === 'groq' ? GROQ_API_URL : OPENROUTER_API_URL;
-  const apiKey = getApiKey(provider);
+  const apiKey = provider === 'groq' ? groqApiKey : openrouterApiKey;
 
   if (!apiKey) {
-    throw new Error(`API ключ для ${provider} не настроен. Пожалуйста, добавьте ключ в настройках.`);
+    throw new Error(`API ключ для ${provider} не настроен. Добавьте ${provider === 'groq' ? 'VITE_GROQ_API_KEY' : 'VITE_OPENROUTER_API_KEY'} в .env файл.`);
   }
 
   const headers: Record<string, string> = {
@@ -85,7 +91,7 @@ export const generateTextWithAI = async (prompt: string): Promise<string> => {
   const availableModels = getAvailableModels();
 
   if (availableModels.length === 0) {
-    throw new Error('Не настроен ни один API ключ. Пожалуйста, добавьте ключ Groq или OpenRouter в настройках.');
+    throw new Error('Не настроен ни один API ключ. Добавьте VITE_GROQ_API_KEY или VITE_OPENROUTER_API_KEY в .env файл.');
   }
 
   let lastError: Error | null = null;

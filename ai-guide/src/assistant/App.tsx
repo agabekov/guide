@@ -5,7 +5,6 @@
 
 import React, { useState, useRef } from 'react';
 import {
-  Settings,
   AlertCircle,
   CheckCircle,
   Download,
@@ -15,7 +14,6 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
-import { SettingsModal } from './components/SettingsModal';
 import { generateTextWithAI, getAvailableModels } from './utils/aiService';
 import type { CheckResult, Change } from '../shared/types';
 
@@ -29,7 +27,6 @@ export const ContentAssistant: React.FC = () => {
   const [iterationCount, setIterationCount] = useState(0);
   const [showDetailedChanges, setShowDetailedChanges] = useState(true);
   const [copiedNotification, setCopiedNotification] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Check text with AI
@@ -41,8 +38,7 @@ export const ContentAssistant: React.FC = () => {
       // Check if API keys are configured
       const availableModels = getAvailableModels();
       if (availableModels.length === 0) {
-        alert('Пожалуйста, настройте API ключи в настройках перед использованием.');
-        setShowSettings(true);
+        alert('Не настроен ни один API ключ. Добавьте VITE_GROQ_API_KEY или VITE_OPENROUTER_API_KEY в .env файл.');
         setIsChecking(false);
         return;
       }
@@ -232,26 +228,11 @@ ${additionalComment}
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Ассистент контент-менеджера</h1>
-              <p className="text-gray-600">Автоматическая проверка вопросов и ответов на соответствие стандартам Kaspi Гид</p>
-            </div>
-            <button
-              onClick={() => setShowSettings(true)}
-              className="flex items-center gap-2 bg-white text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-50 border border-gray-300 transition-all shadow-sm"
-            >
-              <Settings className="w-5 h-5" />
-              Настройки
-            </button>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Ассистент контент-менеджера</h1>
+            <p className="text-gray-600">Автоматическая проверка вопросов и ответов на соответствие стандартам Kaspi Гид</p>
           </div>
         </div>
-
-        {/* Settings Modal */}
-        <SettingsModal
-          isOpen={showSettings}
-          onClose={() => setShowSettings(false)}
-        />
 
         {/* Step 1: Input */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
