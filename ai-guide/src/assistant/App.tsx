@@ -14,7 +14,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
-import { generateTextWithAI, getAvailableModels } from './utils/aiService';
+import { generateTextWithAI, getAvailableModels, sanitizeJSON } from './utils/aiService';
 import type { CheckResult, Change } from '../shared/types';
 
 export const ContentAssistant: React.FC = () => {
@@ -86,7 +86,8 @@ ${comments ? `КОММЕНТАРИИ ОТ ПОЛЬЗОВАТЕЛЯ:\n${comments}
         throw new Error('AI вернул некорректный формат ответа');
       }
 
-      const result = JSON.parse(jsonMatch[0]);
+      const sanitizedJSON = sanitizeJSON(jsonMatch[0]);
+      const result = JSON.parse(sanitizedJSON);
 
       // Add metadata
       result.originalText = inputText;
@@ -152,7 +153,8 @@ ${additionalComment}
         throw new Error('AI вернул некорректный формат ответа');
       }
 
-      const result = JSON.parse(jsonMatch[0]);
+      const sanitizedJSON = sanitizeJSON(jsonMatch[0]);
+      const result = JSON.parse(sanitizedJSON);
 
       // Update result with new changes
       const updatedResult: CheckResult = {
