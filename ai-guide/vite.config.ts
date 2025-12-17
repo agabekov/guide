@@ -10,7 +10,6 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        main: resolve(__dirname, 'index.html'),
         question: resolve(__dirname, 'question.html'),
         assistant: resolve(__dirname, 'assistant.html'),
       },
