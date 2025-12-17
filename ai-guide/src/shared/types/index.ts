@@ -40,3 +40,40 @@ export interface Change {
   after: string;
   checklistItem: string;
 }
+
+// New Editor Review System Types
+
+export type SuggestionType = 'critical' | 'style' | 'seo';
+export type SuggestionStatus = 'pending' | 'accepted' | 'rejected';
+
+export interface EditorSuggestion {
+  id: string;
+
+  // Position in original text
+  startIndex: number;
+  endIndex: number;
+  originalText: string;
+
+  // Editor's suggestion
+  suggestedText: string;
+
+  // Explanation (the key part!)
+  type: SuggestionType;
+  problem: string;           // What's wrong
+  why: string;               // Why it matters
+  checklistItem: string;     // Reference to checklist item
+
+  // State
+  status: SuggestionStatus;
+}
+
+export interface EditorReview {
+  originalText: string;
+  suggestions: EditorSuggestion[];
+  overallComment: string;    // General editor comment
+  stats: {
+    critical: number;
+    style: number;
+    seo: number;
+  };
+}
