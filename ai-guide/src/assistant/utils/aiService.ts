@@ -5,6 +5,68 @@
 
 import type { ModelConfig } from '../../shared/types';
 
+/**
+ * Sanitize JSON string by escaping unescaped control characters
+ * This fixes JSON parsing errors when the response contains newlines in string values
+ */
+export const sanitizeJSON = (jsonString: string): string => {
+  try {
+    // First, try to parse as-is to see if it's already valid
+    JSON.parse(jsonString);
+    return jsonString;
+  } catch (e) {
+    // If parsing fails, we need to sanitize
+    let result = '';
+    let inString = false;
+    let escape = false;
+
+    for (let i = 0; i < jsonString.length; i++) {
+      const char = jsonString[i];
+      const nextChar = jsonString[i + 1];
+
+      if (escape) {
+        result += char;
+        escape = false;
+        continue;
+      }
+
+      if (char === '\\') {
+        result += char;
+        escape = true;
+        continue;
+      }
+
+      if (char === '"') {
+        inString = !inString;
+        result += char;
+        continue;
+      }
+
+      // If we're in a string and encounter control characters, escape them
+      if (inString) {
+        if (char === '\n') {
+          result += '\\n';
+          continue;
+        } else if (char === '\r') {
+          result += '\\r';
+          continue;
+        } else if (char === '\t') {
+          result += '\\t';
+          continue;
+        } else if (char.charCodeAt(0) < 32) {
+          // Escape other control characters
+          result += '\\u' + ('000' + char.charCodeAt(0).toString(16)).slice(-4);
+          continue;
+        }
+      }
+
+      result += char;
+    }
+
+    return result;
+  }
+};
+
 const groqApiKey = import.meta.env.VITE_GROQ_API_KEY;
 const openrouterApiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
 
