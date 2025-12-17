@@ -47,18 +47,20 @@ export const ReviewComplete: React.FC<ReviewCompleteProps> = ({
   const totalCount = suggestions.length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-fade-in">
       {/* Success Header */}
-      <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border-2 border-green-200 p-6">
-        <div className="flex items-start gap-4">
-          <div className="p-3 bg-green-100 rounded-full">
-            <CheckCircle className="w-8 h-8 text-green-600" />
+      <div className="bg-gradient-to-br from-green-50/90 to-emerald-50/90 backdrop-blur-xl rounded-3xl border-2 border-green-300/50 p-8 animate-scale-in" style={{
+        boxShadow: '0 20px 60px rgba(16, 185, 129, 0.15), 0 8px 24px rgba(0, 0, 0, 0.1)'
+      }}>
+        <div className="flex items-start gap-5">
+          <div className="p-4 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-lg">
+            <CheckCircle className="w-10 h-10 text-white" />
           </div>
           <div className="flex-1">
-            <h3 className="text-xl font-bold text-green-900 mb-2">
+            <h3 className="text-3xl font-bold text-green-900 mb-3">
               Редактирование завершено!
             </h3>
-            <p className="text-green-700 leading-relaxed">
+            <p className="text-green-700 leading-relaxed text-lg">
               {overallComment}
             </p>
 
@@ -88,38 +90,43 @@ export const ReviewComplete: React.FC<ReviewCompleteProps> = ({
       </div>
 
       {/* Final Text */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-5 py-3 border-b border-gray-200 bg-gray-50 flex items-center gap-2">
-          <FileText className="w-5 h-5 text-gray-600" />
-          <h4 className="font-semibold text-gray-900">Итоговый текст</h4>
+      <div className="bg-white/98 backdrop-blur-xl rounded-3xl border border-white/30 overflow-hidden" style={{
+        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 24px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)'
+      }}>
+        <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white/50 backdrop-blur-sm flex items-center gap-3">
+          <FileText className="w-6 h-6 text-blue-600" />
+          <h4 className="font-bold text-gray-900 text-lg">Итоговый текст</h4>
         </div>
-        <div className="p-5">
-          <div className="bg-gradient-to-br from-gray-50 to-white rounded-lg p-5 border border-gray-200 min-h-[200px]">
-            <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+        <div className="p-6">
+          <div className="bg-gradient-to-br from-gray-50/80 to-white rounded-2xl p-6 border border-gray-200 min-h-[200px]">
+            <p className="text-gray-800 leading-relaxed whitespace-pre-wrap text-base">
               {finalText}
             </p>
           </div>
         </div>
 
         {/* Actions */}
-        <div className="px-5 py-4 bg-gray-50 border-t border-gray-200 flex gap-3">
+        <div className="px-6 py-5 bg-gradient-to-r from-gray-50/80 to-white/80 backdrop-blur-sm border-t border-gray-200 flex gap-4">
           <button
             onClick={onCopy}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            className="flex-1 flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-2xl hover:shadow-xl transition-all font-semibold hover:transform hover:-translate-y-0.5"
+            style={{
+              boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3), 0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+            }}
           >
             <Copy className="w-5 h-5" />
             Копировать текст
           </button>
           <button
             onClick={onDownload}
-            className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+            className="flex items-center justify-center gap-2 px-6 py-4 bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-700 rounded-2xl hover:bg-gray-50 hover:shadow-md transition-all font-semibold"
           >
             <Download className="w-5 h-5" />
             Скачать .docx
           </button>
           <button
             onClick={onNewCheck}
-            className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+            className="flex items-center justify-center gap-2 px-6 py-4 bg-white/80 backdrop-blur-sm border border-gray-300 text-gray-700 rounded-2xl hover:bg-gray-50 hover:shadow-md transition-all font-semibold"
           >
             <RefreshCw className="w-5 h-5" />
             Новая проверка
@@ -129,9 +136,11 @@ export const ReviewComplete: React.FC<ReviewCompleteProps> = ({
 
       {/* Accepted Changes Summary */}
       {acceptedCount > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="px-5 py-3 border-b border-gray-200 bg-gray-50">
-            <h4 className="font-semibold text-gray-900">
+        <div className="bg-white/98 backdrop-blur-xl rounded-3xl border border-white/30 overflow-hidden" style={{
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 24px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)'
+        }}>
+          <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-green-50/80 to-white/50 backdrop-blur-sm">
+            <h4 className="font-bold text-gray-900 text-lg">
               Принятые изменения ({acceptedCount})
             </h4>
           </div>

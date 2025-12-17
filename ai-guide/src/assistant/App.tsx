@@ -456,23 +456,30 @@ ${userComments ? `КОММЕНТАРИЙ ОТ АВТОРА:\n${userComments}\n\n
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+    <div className="min-h-screen p-6 relative z-10">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-8 bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/30 p-8 animate-slide-down" style={{
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6)'
+        }}>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Ассистент контент-менеджера</h1>
-              <p className="text-gray-600">Редактор проверит ваш текст и оставит комментарии к местам, которые можно улучшить</p>
+              <h1 className="text-4xl font-bold mb-3" style={{
+                background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text'
+              }}>Ассистент контент-менеджера</h1>
+              <p className="text-gray-600 text-lg">Редактор проверит ваш текст и оставит комментарии к местам, которые можно улучшить</p>
             </div>
             {/* RAG Status Indicator */}
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg">
-              <Database className={`w-4 h-4 ${
+            <div className="flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-md rounded-xl border border-gray-200/50 shadow-sm">
+              <Database className={`w-5 h-5 ${
                 ragStatus === 'ready' ? 'text-green-500' :
                 ragStatus === 'loading' ? 'text-yellow-500 animate-pulse' :
                 ragStatus === 'error' ? 'text-red-500' : 'text-gray-400'
               }`} />
-              <span className="text-xs text-gray-600">
+              <span className="text-sm font-medium text-gray-700">
                 {ragStatus === 'ready' ? 'База знаний готова' :
                  ragStatus === 'loading' ? 'Загрузка базы...' :
                  ragStatus === 'error' ? 'База недоступна' : 'Инициализация...'}
@@ -483,10 +490,12 @@ ${userComments ? `КОММЕНТАРИЙ ОТ АВТОРА:\n${userComments}\n\n
 
         {/* Step 1: Input */}
         {(reviewState === 'input' || reviewState === 'loading') && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">1</div>
-              <h2 className="text-xl font-semibold text-gray-900">Введите текст для проверки</h2>
+          <div className="bg-white/98 backdrop-blur-2xl rounded-3xl border border-white/30 p-8 mb-8 animate-fade-in" style={{
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 24px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)'
+          }}>
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-blue-500 text-white flex items-center justify-center font-bold text-lg shadow-lg">1</div>
+              <h2 className="text-2xl font-bold text-gray-900">Введите текст для проверки</h2>
             </div>
 
             <div className="mb-4">
@@ -544,17 +553,21 @@ ${userComments ? `КОММЕНТАРИЙ ОТ АВТОРА:\n${userComments}\n\n
             <button
               onClick={handleCheckText}
               disabled={!inputText.trim() || reviewState === 'loading'}
-              className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md disabled:shadow-none flex items-center justify-center gap-2"
+              className="w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white py-4 px-8 rounded-2xl font-semibold hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:transform hover:-translate-y-1 disabled:transform-none flex items-center justify-center gap-3 text-lg relative overflow-hidden group"
+              style={{
+                boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3), 0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+              }}
             >
+              <span className="absolute inset-0 bg-gradient-to-r from-blue-500 to-blue-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
               {reviewState === 'loading' ? (
                 <>
-                  <RefreshCw className="w-5 h-5 animate-spin" />
-                  Редактор анализирует текст...
+                  <RefreshCw className="w-6 h-6 animate-spin relative z-10" />
+                  <span className="relative z-10">Редактор анализирует текст...</span>
                 </>
               ) : (
                 <>
-                  <MessageSquare className="w-5 h-5" />
-                  Получить комментарии редактора
+                  <MessageSquare className="w-6 h-6 relative z-10" />
+                  <span className="relative z-10">Получить комментарии редактора</span>
                 </>
               )}
             </button>
@@ -565,13 +578,15 @@ ${userComments ? `КОММЕНТАРИЙ ОТ АВТОРА:\n${userComments}\n\n
         {reviewState === 'reviewing' && review && (
           <>
             {/* Stats Header */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+            <div className="bg-white/95 backdrop-blur-xl rounded-3xl border border-white/30 p-6 mb-8 animate-fade-in" style={{
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6)'
+            }}>
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">2</div>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-blue-500 text-white flex items-center justify-center font-bold text-lg shadow-lg">2</div>
                   <div>
-                    <h2 className="text-lg font-semibold text-gray-900">Рассмотрите замечания редактора</h2>
-                    <p className="text-sm text-gray-500">
+                    <h2 className="text-2xl font-bold text-gray-900">Рассмотрите замечания редактора</h2>
+                    <p className="text-base text-gray-600 mt-1">
                       Осталось: {pendingSuggestions.length} из {review.suggestions.length}
                     </p>
                   </div>
@@ -581,12 +596,14 @@ ${userComments ? `КОММЕНТАРИЙ ОТ АВТОРА:\n${userComments}\n\n
             </div>
 
             {/* Main Review Area */}
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 gap-8">
               {/* Left: Text with Highlights */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="px-5 py-3 border-b border-gray-200 bg-gray-50">
-                  <h3 className="font-semibold text-gray-900">Ваш текст</h3>
-                  <p className="text-xs text-gray-500">Нажмите на выделенный фрагмент, чтобы увидеть комментарий</p>
+              <div className="bg-white/98 backdrop-blur-xl rounded-3xl border border-white/30 overflow-hidden animate-fade-in" style={{
+                boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 24px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)'
+              }}>
+                <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100/50 backdrop-blur-sm">
+                  <h3 className="font-bold text-gray-900 text-lg">Ваш текст</h3>
+                  <p className="text-sm text-gray-600 mt-1">Нажмите на выделенный фрагмент, чтобы увидеть комментарий</p>
                 </div>
                 <div className="p-5">
                   <HighlightedText
@@ -632,8 +649,11 @@ ${userComments ? `КОММЕНТАРИЙ ОТ АВТОРА:\n${userComments}\n\n
 
         {/* Notification */}
         {copiedNotification && (
-          <div className="fixed bottom-6 right-6 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-fade-in z-50">
-            Скопировано!
+          <div className="fixed bottom-8 right-8 bg-gradient-to-r from-green-600 to-green-500 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 animate-scale-in z-50 border border-white/20" style={{
+            boxShadow: '0 12px 32px rgba(16, 185, 129, 0.3), 0 4px 12px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+          }}>
+            <span className="text-2xl">✓</span>
+            <span className="font-semibold text-lg">Скопировано!</span>
           </div>
         )}
       </div>
