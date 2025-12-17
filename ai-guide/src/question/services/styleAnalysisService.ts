@@ -250,60 +250,6 @@ const CACHE_KEY = 'kaspi-guide-style-analysis';
 let cachedStyleAnalysis: StyleAnalysis | null = null;
 
 /**
- * Сохраняет анализ стиля в localStorage
- */
-const saveToLocalStorage = (analysis: StyleAnalysis): void => {
-  try {
-    const cacheData = {
-      version: CACHE_VERSION,
-      timestamp: Date.now(),
-      analysis: analysis,
-    };
-    localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-    console.log('💾 Style analysis saved to localStorage');
-  } catch (error) {
-    console.warn('⚠️  Failed to save to localStorage:', error);
-    // Не критично, продолжаем работу
-  }
-};
-
-/**
- * Загружает анализ стиля из localStorage
- */
-const loadFromLocalStorage = (): StyleAnalysis | null => {
-  try {
-    const cached = localStorage.getItem(CACHE_KEY);
-    if (!cached) {
-      return null;
-    }
-
-    const cacheData = JSON.parse(cached);
-
-    // Проверяем версию кэша
-    if (cacheData.version !== CACHE_VERSION) {
-      console.log('⚠️  Cache version mismatch, will recreate');
-      localStorage.removeItem(CACHE_KEY);
-      return null;
-    }
-
-    // Проверяем возраст кэша (макс. 7 дней)
-    const age = Date.now() - cacheData.timestamp;
-    const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 дней
-    if (age > maxAge) {
-      console.log('⚠️  Cache expired (> 7 days), will recreate');
-      localStorage.removeItem(CACHE_KEY);
-      return null;
-    }
-
-    console.log('💾 Loaded style analysis from localStorage');
-    return cacheData.analysis as StyleAnalysis;
-  } catch (error) {
-    console.warn('⚠️  Failed to load from localStorage:', error);
-    return null;
-  }
-};
-
-/**
  * Получает предвычисленный анализ стиля (мгновенно для всех пользователей!)
  *
  * Анализ выполняется один раз при сборке проекта (npm run build:style)
