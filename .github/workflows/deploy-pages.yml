@@ -19,9 +19,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VITE_GROQ_API_KEY: ${{ secrets.VITE_GROQ_API_KEY }}
+      VITE_OPENROUTER_API_KEY: ${{ secrets.VITE_OPENROUTER_API_KEY }}
     defaults:
       run:
-        working-directory: ./kaspi-guide
+        working-directory: ./ai-guide
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,21 +32,22 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: ./kaspi-guide/package-lock.json
+          cache-dependency-path: ./ai-guide/package-lock.json
 
       - name: Install dependencies
         run: npm ci
 
+      - name: Build question data
+        run: npm run build:question-data
+        continue-on-error: true
+
       - name: Build site
         run: npm run build
-
-      - name: Add SPA fallback
-        run: cp dist/index.html dist/404.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./kaspi-guide/dist
+          path: ./ai-guide/dist
 
   deploy:
     needs: build
