@@ -12,7 +12,6 @@ import {
   AlertCircle,
   Lightbulb,
   FileText,
-  Database,
 } from 'lucide-react';
 import { generateTextWithAI, getAvailableModels, sanitizeJSON } from './utils/aiService';
 import { HighlightedText, SuggestionCard, ReviewComplete } from './components';
@@ -462,29 +461,14 @@ ${userComments ? `КОММЕНТАРИЙ ОТ АВТОРА:\n${userComments}\n\n
         <div className="mb-8 bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/30 p-8 animate-slide-down" style={{
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6)'
         }}>
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold mb-3" style={{
-                background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text'
-              }}>Ассистент контент-менеджера</h1>
-              <p className="text-gray-600 text-lg">Редактор проверит ваш текст и оставит комментарии к местам, которые можно улучшить</p>
-            </div>
-            {/* RAG Status Indicator */}
-            <div className="flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-md rounded-xl border border-gray-200/50 shadow-sm">
-              <Database className={`w-5 h-5 ${
-                ragStatus === 'ready' ? 'text-green-500' :
-                ragStatus === 'loading' ? 'text-yellow-500 animate-pulse' :
-                ragStatus === 'error' ? 'text-red-500' : 'text-gray-400'
-              }`} />
-              <span className="text-sm font-medium text-gray-700">
-                {ragStatus === 'ready' ? 'База знаний готова' :
-                 ragStatus === 'loading' ? 'Загрузка базы...' :
-                 ragStatus === 'error' ? 'База недоступна' : 'Инициализация...'}
-              </span>
-            </div>
+          <div>
+            <h1 className="text-4xl font-bold mb-3" style={{
+              background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}>Ассистент контент-менеджера</h1>
+            <p className="text-gray-600 text-lg">Редактор проверит ваш текст и оставит комментарии к местам, которые можно улучшить</p>
           </div>
         </div>
 
